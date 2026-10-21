@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Chuva x Rio · Histórico do Alto Vale</title>
+    <link rel="stylesheet" href="./style.css?v=2" />
+    <script src="./app.js?v=2" defer></script>
+  </head>
+  <body>
+    <div
+      id="startup-help"
+      hidden
+      style="
+        margin: 20px;
+        padding: 24px;
+        background: #edf6ff;
+        border: 2px solid #286fba;
+        border-radius: 12px;
+        font-family:
+          Segoe UI,
+          Arial;
+        color: #16384d;
+      "
+    >
+      <h2>Abra o Chuva x Rio pelo iniciador</h2>
+      <p>
+        Este arquivo foi aberto diretamente. Para carregar os dados e filtros, o
+        servidor Python precisa estar em execução.
+      </p>
+      <p>
+        Após instalar as dependências do README, abra
+        <strong>iniciar.cmd</strong> na pasta do projeto ou execute
+        <code>python run.py</code>.
+      </p>
+      <a href="http://127.0.0.1:8000/"
+        >Abrir o sistema em http://127.0.0.1:8000/</a
+      >
+    </div>
+    <script>
+      if (location.protocol === "file:") {
+        document.getElementById("startup-help").hidden = false;
+        document.documentElement.classList.add("file-mode");
+      }
+    </script>
+    <noscript
+      ><p style="padding: 24px">
+        Ative JavaScript para usar os filtros e gráficos.
+      </p></noscript
+    >
+    <header>
+      <a class="brand" href="/" aria-label="Chuva x Rio, início"
+        ><span class="mark">≈</span> Chuva <span>×</span> Rio</a
+      ><span class="tag">PROJETO INTEGRADOR II · UDESC</span>
+    </header>
+    <main>
+      <section class="hero">
+        <p class="eyebrow">OBSERVATÓRIO HISTÓRICO / ALTO VALE DO ITAJAÍ</p>
+        <h1>Histórico da chuva.<br />Perspectiva para os rios.</h1>
+        <p>
+          Explore episódios de El Niño e compare as séries disponíveis.<br />Uma
+          leitura histórica de Ibirama e Presidente Getúlio.
+        </p>
+        <div class="hero-note">ANÁLISE HISTÓRICA · SEM PREVISÃO OU ALERTAS</div>
+        <div class="hero-stats" id="overview">
+          <span>NOAA/CPC <b>ENSO</b></span
+          ><span>NASA POWER <b>Precipitação</b></span
+          ><span>Alto Vale <b>Santa Catarina</b></span>
+        </div>
+      </section>
+      <div id="status" tabindex="-1" role="status" aria-live="polite">
+        Carregando os dados locais…
+      </div>
+      <section class="panel">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">01 / SELECIONE OS PERÍODOS</p>
+            <h2>Linha do tempo ENSO</h2>
+          </div>
+          <span class="badge">NOAA/CPC · RONI</span>
+        </div>
+        <p class="muted">
+          Escolha até três períodos. Datas representam os meses centrais das
+          temporadas marcadas como quentes pela NOAA. O período atual é uma
+          janela de consulta independente.
+        </p>
+        <div class="timeline" id="timeline"></div>
+        <details>
+          <summary>
+            Explorar outros episódios desde 1950 (inclui períodos sem dados
+            locais)
+          </summary>
+          <div id="older" class="timeline"></div>
+        </details>
+        <div id="selection-summary" class="selection-summary"></div>
+        <div class="current-window">
+          <button id="current" type="button" aria-pressed="false">
+            ＋ Período atual</button
+          ><button id="custom" type="button" aria-pressed="false">
+            ＋ Intervalo personalizado</button
+          ><label
+            >De
+            <input id="current-start" type="date" value="2026-01-01" /></label
+          ><label
+            >Até <input id="current-end" type="date" value="2026-10-21"
+          /></label>
+        </div>
+        <p class="muted">
+          As datas acima são aplicadas ao período atual ou ao intervalo
+          personalizado. Os eventos preservam o calendário NOAA.
+        </p>
+        <p class="muted" id="enso-note"></p>
+      </section>
+      <section class="panel" id="analysis">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">02 / EXPLORE E COMPARE</p>
+            <h2>Chuva e nível dos rios</h2>
+          </div>
+          <button id="download" class="secondary">
+            Baixar dados exibidos · CSV
+          </button>
+        </div>
+        <div class="filters">
+          <label>Ponto de precipitação<select id="rain"></select></label
+          ><label
+            >Estação de nível<select id="river">
+              <option value="">Sem estação importada</option>
+            </select></label
+          ><label
+            >Resolução<select id="resolution">
+              <option value="monthly">Mensal</option>
+              <option value="daily">Diária</option>
+            </select></label
+          ><label
+            >Variáveis<select id="variables">
+              <option value="rain">Precipitação</option>
+              <option value="both">Chuva e nível</option>
+              <option value="river">Nível dos rios</option>
+            </select></label
+          >
+        </div>
+        <label class="check"
+          ><input id="common" type="checkbox" checked /> Usar trecho comum entre
+          períodos</label
+        >
+        <p id="alignment" class="muted"></p>
+        <div id="metrics" class="metrics"></div>
+        <div id="charts"></div>
+        <div class="notice">
+          <strong>Como ler os dados</strong>
+          <p>
+            Zero é uma observação válida. Ausência não vira zero: curvas são
+            interrompidas e meses parciais têm cobertura indicada. Chuva mensal
+            é soma dos dias disponíveis; nível mensal é média dos dias
+            disponíveis. Os valores parciais não representam um mês completo.
+          </p>
+        </div>
+        <details>
+          <summary>Consultar valores, datas originais e cobertura</summary>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Período</th>
+                  <th>Local</th>
+                  <th>Data inicial</th>
+                  <th>Data final</th>
+                  <th>Valor</th>
+                  <th>Unidade</th>
+                  <th>Dias válidos/esperados</th>
+                </tr>
+              </thead>
+              <tbody id="values"></tbody>
+            </table>
+          </div>
+        </details>
+      </section>
+      <section class="panel">
+        <p class="eyebrow">03 / TRANSPARÊNCIA</p>
+        <h2>De onde vêm os dados?</h2>
+        <div class="sources" id="sources"></div>
+        <details>
+          <summary>Histórico das últimas cargas</summary>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fonte</th>
+                  <th>Concluída em (UTC)</th>
+                  <th>Status</th>
+                  <th>Inseridos / revisados / repetidos / rejeitados</th>
+                </tr>
+              </thead>
+              <tbody id="runs"></tbody>
+            </table>
+          </div>
+        </details>
+      </section>
+    </main>
+    <footer>
+      <strong>Chuva × Rio</strong
+      ><span
+        >Breno Batista Pascoalin & Henrique Knaul · Projeto Integrador II ·
+        2026</span
+      >
+    </footer>
+  </body>
+</html>
