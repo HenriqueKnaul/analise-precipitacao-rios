@@ -1,0 +1,11 @@
+.venv*/
+.packages/
+.pip-tmp/
+__pycache__/
+*.pyc
+data/*.sqlite*
+data/backups/
+output/
+node_modules/
+debug.log
+tests/tmp*/
