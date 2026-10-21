@@ -5,7 +5,7 @@ from contextlib import closing
 from pathlib import Path
 from datetime import date, timedelta
 from .db import connect, initialize, ROOT
-from .ingest import import_noaa, import_nasa, import_river
+from .ingest import import_noaa, import_nasa, import_river, import_ana
 
 
 def main():
@@ -17,6 +17,8 @@ def main():
     p = sub.add_parser('nasa'); p.add_argument('--station',required=True)
     p.add_argument('--start',type=date.fromisoformat,required=True); p.add_argument('--end',type=date.fromisoformat,required=True)
     r = sub.add_parser('river'); r.add_argument('--file',type=Path,required=True); r.add_argument('--metadata',type=Path,required=True)
+    a = sub.add_parser('ana'); a.add_argument('--file',type=Path); a.add_argument('--metadata',type=Path,required=True)
+    a.add_argument('--start',type=date.fromisoformat,required=True); a.add_argument('--end',type=date.fromisoformat,required=True)
     b = sub.add_parser('backup'); b.add_argument('--output',type=Path,required=True)
     sub.add_parser('refresh')
     args = parser.parse_args()
@@ -40,6 +42,10 @@ def main():
                 parser.error('Use intervalo crescente de até cinco anos')
             results.append(import_nasa(db,args.station,args.start,args.end))
         elif args.command=='river': results.append(import_river(db,args.file,json.loads(args.metadata.read_text(encoding='utf-8'))))
+        elif args.command=='ana':
+            if args.end<args.start or (args.end-args.start).days>366*5:
+                parser.error('Use intervalo crescente de até cinco anos')
+            results.append(import_ana(db,json.loads(args.metadata.read_text(encoding='utf-8')),args.start,args.end,args.file))
         elif args.command=='backup':
             args.output.parent.mkdir(parents=True,exist_ok=True)
             with sqlite3.connect(args.output) as target: db.backup(target)

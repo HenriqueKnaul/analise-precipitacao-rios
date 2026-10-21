@@ -45,8 +45,10 @@ def initialize(db):
     db.executemany('INSERT OR IGNORE INTO source VALUES(?,?,?)', [
         ('noaa', 'NOAA/CPC · RONI ERSSTv6', 'https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/'),
         ('nasa', 'NASA POWER · PRECTOTCORR', 'https://power.larc.nasa.gov/docs/services/api/temporal/daily/'),
-        ('ana', 'ANA/SNIRH · arquivo importado', 'https://www.snirh.gov.br/hidroweb/'),
+        ('ana', 'ANA/SNIRH · Hidro', 'https://www.ana.gov.br/telemetria1ws/ServiceANA.asmx?op=HidroSerieHistorica'),
     ])
+    db.execute("UPDATE source SET name='ANA/SNIRH · Hidro',url=? WHERE id='ana'",
+               ('https://www.ana.gov.br/telemetria1ws/ServiceANA.asmx?op=HidroSerieHistorica',))
     db.executemany('INSERT OR IGNORE INTO station VALUES(?,?,?,?,?,?,?)', [
         ('power-ibirama','nasa','Ibirama · ponto de consulta','grid',-27.057,-49.519,None),
         ('power-presidente','nasa','Presidente Getúlio · ponto de consulta','grid',-27.051,-49.622,None),

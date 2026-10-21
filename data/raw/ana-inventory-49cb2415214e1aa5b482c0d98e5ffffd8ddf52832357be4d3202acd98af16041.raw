@@ -1,0 +1,833 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DataSet xmlns="http://MRCS/">
+  <xs:schema id="Estacoes" xmlns="" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xs:element name="Estacoes" msdata:IsDataSet="true" msdata:UseCurrentLocale="true">
+      <xs:complexType>
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+          <xs:element name="Table">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="BaciaCodigo" type="xs:string" minOccurs="0" />
+                <xs:element name="SubBaciaCodigo" type="xs:string" minOccurs="0" />
+                <xs:element name="RioCodigo" type="xs:string" minOccurs="0" />
+                <xs:element name="RioNome" type="xs:string" minOccurs="0" />
+                <xs:element name="EstadoCodigo" type="xs:string" minOccurs="0" />
+                <xs:element name="nmEstado" type="xs:string" minOccurs="0" />
+                <xs:element name="MunicipioCodigo" type="xs:string" minOccurs="0" />
+                <xs:element name="nmMunicipio" type="xs:string" minOccurs="0" />
+                <xs:element name="ResponsavelCodigo" type="xs:string" minOccurs="0" />
+                <xs:element name="ResponsavelSigla" type="xs:string" minOccurs="0" />
+                <xs:element name="ResponsavelUnidade" type="xs:string" minOccurs="0" />
+                <xs:element name="ResponsavelJurisdicao" type="xs:string" minOccurs="0" />
+                <xs:element name="OperadoraCodigo" type="xs:string" minOccurs="0" />
+                <xs:element name="OperadoraSigla" type="xs:string" minOccurs="0" />
+                <xs:element name="OperadoraUnidade" type="xs:string" minOccurs="0" />
+                <xs:element name="OperadoraSubUnidade" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoEstacao" type="xs:string" minOccurs="0" />
+                <xs:element name="Codigo" type="xs:string" minOccurs="0" />
+                <xs:element name="Nome" type="xs:string" minOccurs="0" />
+                <xs:element name="CodigoAdicional" type="xs:string" minOccurs="0" />
+                <xs:element name="Latitude" type="xs:string" minOccurs="0" />
+                <xs:element name="Longitude" type="xs:string" minOccurs="0" />
+                <xs:element name="Altitude" type="xs:string" minOccurs="0" />
+                <xs:element name="AreaDrenagem" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoEstacaoEscala" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoEstacaoRegistradorNivel" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoEstacaoDescLiquida" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoEstacaoSedimentos" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoEstacaoQualAgua" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoEstacaoPluviometro" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoEstacaoRegistradorChuva" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoEstacaoTanqueEvapo" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoEstacaoClimatologica" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoEstacaoPiezometria" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoEstacaoTelemetrica" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoEscalaInicio" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoEscalaFim" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoRegistradorNivelInicio" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoRegistradorNivelFim" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoDescLiquidaInicio" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoDescLiquidaFim" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoSedimentosInicio" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoSedimentosFim" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoQualAguaInicio" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoQualAguaFim" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoPluviometroInicio" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoPluviometroFim" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoRegistradorChuvaInicio" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoRegistradorChuvaFim" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoTanqueEvapoInicio" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoTanqueEvapoFim" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoClimatologicaInicio" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoClimatologicaFim" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoPiezometriaInicio" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoPiezometriaFim" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoTelemetricaInicio" type="xs:string" minOccurs="0" />
+                <xs:element name="PeriodoTelemetricaFim" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoRedeBasica" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoRedeEnergetica" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoRedeNavegacao" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoRedeCursoDagua" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoRedeEstrategica" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoRedeCaptacao" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoRedeSedimentos" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoRedeQualAgua" type="xs:string" minOccurs="0" />
+                <xs:element name="TipoRedeClasseVazao" type="xs:string" minOccurs="0" />
+                <xs:element name="UltimaAtualizacao" type="xs:string" minOccurs="0" />
+                <xs:element name="Operando" type="xs:string" minOccurs="0" />
+                <xs:element name="Descricao" type="xs:string" minOccurs="0" />
+                <xs:element name="NumImagens" type="xs:string" minOccurs="0" />
+                <xs:element name="DataIns" type="xs:string" minOccurs="0" />
+                <xs:element name="DataAlt" type="xs:string" minOccurs="0" />
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:choice>
+      </xs:complexType>
+    </xs:element>
+  </xs:schema>
+  <diffgr:diffgram xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" xmlns:diffgr="urn:schemas-microsoft-com:xml-diffgram-v1">
+    <Estacoes xmlns="">
+      <Table diffgr:id="Table1" msdata:rowOrder="0">
+        <BaciaCodigo>8</BaciaCodigo>
+        <SubBaciaCodigo>83</SubBaciaCodigo>
+        <RioCodigo>83300000</RioCodigo>
+        <RioNome>RIO ITAJAÍ DO NORTE OU HERCÍLIO</RioNome>
+        <EstadoCodigo>23</EstadoCodigo>
+        <nmEstado>SANTA CATARINA</nmEstado>
+        <MunicipioCodigo>23068000</MunicipioCodigo>
+        <nmMunicipio>IBIRAMA</nmMunicipio>
+        <ResponsavelCodigo>2</ResponsavelCodigo>
+        <ResponsavelSigla>DNOS</ResponsavelSigla>
+        <ResponsavelUnidade />
+        <ResponsavelJurisdicao />
+        <OperadoraCodigo>2</OperadoraCodigo>
+        <OperadoraSigla>DNOS</OperadoraSigla>
+        <OperadoraUnidade />
+        <OperadoraSubUnidade />
+        <TipoEstacao>1</TipoEstacao>
+        <Codigo>83349400</Codigo>
+        <Nome>BARRAGEM NORTE</Nome>
+        <CodigoAdicional />
+        <Latitude>-26.8833</Latitude>
+        <Longitude>-49.6833</Longitude>
+        <Altitude>250</Altitude>
+        <AreaDrenagem>2100</AreaDrenagem>
+        <TipoEstacaoEscala>0</TipoEstacaoEscala>
+        <TipoEstacaoRegistradorNivel>0</TipoEstacaoRegistradorNivel>
+        <TipoEstacaoDescLiquida>0</TipoEstacaoDescLiquida>
+        <TipoEstacaoSedimentos>0</TipoEstacaoSedimentos>
+        <TipoEstacaoQualAgua>0</TipoEstacaoQualAgua>
+        <TipoEstacaoPluviometro>0</TipoEstacaoPluviometro>
+        <TipoEstacaoRegistradorChuva>0</TipoEstacaoRegistradorChuva>
+        <TipoEstacaoTanqueEvapo>0</TipoEstacaoTanqueEvapo>
+        <TipoEstacaoClimatologica>0</TipoEstacaoClimatologica>
+        <TipoEstacaoPiezometria>0</TipoEstacaoPiezometria>
+        <TipoEstacaoTelemetrica>0</TipoEstacaoTelemetrica>
+        <PeriodoEscalaInicio>1976-09-01 00:00:00</PeriodoEscalaInicio>
+        <PeriodoEscalaFim>1978-12-01 00:00:00</PeriodoEscalaFim>
+        <PeriodoRegistradorNivelInicio />
+        <PeriodoRegistradorNivelFim />
+        <PeriodoDescLiquidaInicio />
+        <PeriodoDescLiquidaFim />
+        <PeriodoSedimentosInicio />
+        <PeriodoSedimentosFim />
+        <PeriodoQualAguaInicio />
+        <PeriodoQualAguaFim />
+        <PeriodoPluviometroInicio />
+        <PeriodoPluviometroFim />
+        <PeriodoRegistradorChuvaInicio />
+        <PeriodoRegistradorChuvaFim />
+        <PeriodoTanqueEvapoInicio />
+        <PeriodoTanqueEvapoFim />
+        <PeriodoClimatologicaInicio />
+        <PeriodoClimatologicaFim />
+        <PeriodoPiezometriaInicio />
+        <PeriodoPiezometriaFim />
+        <PeriodoTelemetricaInicio />
+        <PeriodoTelemetricaFim />
+        <TipoRedeBasica>0</TipoRedeBasica>
+        <TipoRedeEnergetica>0</TipoRedeEnergetica>
+        <TipoRedeNavegacao>0</TipoRedeNavegacao>
+        <TipoRedeCursoDagua>3</TipoRedeCursoDagua>
+        <TipoRedeEstrategica>0</TipoRedeEstrategica>
+        <TipoRedeCaptacao>7</TipoRedeCaptacao>
+        <TipoRedeSedimentos>0</TipoRedeSedimentos>
+        <TipoRedeQualAgua>0</TipoRedeQualAgua>
+        <TipoRedeClasseVazao>0</TipoRedeClasseVazao>
+        <UltimaAtualizacao>2009-03-16 00:00:00</UltimaAtualizacao>
+        <Operando>0</Operando>
+        <Descricao />
+        <NumImagens>0</NumImagens>
+        <DataIns />
+        <DataAlt />
+      </Table>
+      <Table diffgr:id="Table2" msdata:rowOrder="1">
+        <BaciaCodigo>8</BaciaCodigo>
+        <SubBaciaCodigo>83</SubBaciaCodigo>
+        <RioCodigo>83300000</RioCodigo>
+        <RioNome>RIO ITAJAÍ DO NORTE OU HERCÍLIO</RioNome>
+        <EstadoCodigo>23</EstadoCodigo>
+        <nmEstado>SANTA CATARINA</nmEstado>
+        <MunicipioCodigo>23068000</MunicipioCodigo>
+        <nmMunicipio>IBIRAMA</nmMunicipio>
+        <ResponsavelCodigo>193</ResponsavelCodigo>
+        <ResponsavelSigla>MAFRAS</ResponsavelSigla>
+        <ResponsavelUnidade />
+        <ResponsavelJurisdicao />
+        <OperadoraCodigo>193</OperadoraCodigo>
+        <OperadoraSigla>MAFRAS</OperadoraSigla>
+        <OperadoraUnidade />
+        <OperadoraSubUnidade>1</OperadoraSubUnidade>
+        <TipoEstacao>1</TipoEstacao>
+        <Codigo>83380000</Codigo>
+        <Nome>CGH MAFRÁS MONTANTE</Nome>
+        <CodigoAdicional />
+        <Latitude>-27.0322</Latitude>
+        <Longitude>-49.5869</Longitude>
+        <Altitude>253</Altitude>
+        <AreaDrenagem>3176</AreaDrenagem>
+        <TipoEstacaoEscala>1</TipoEstacaoEscala>
+        <TipoEstacaoRegistradorNivel>0</TipoEstacaoRegistradorNivel>
+        <TipoEstacaoDescLiquida>1</TipoEstacaoDescLiquida>
+        <TipoEstacaoSedimentos>1</TipoEstacaoSedimentos>
+        <TipoEstacaoQualAgua>0</TipoEstacaoQualAgua>
+        <TipoEstacaoPluviometro>0</TipoEstacaoPluviometro>
+        <TipoEstacaoRegistradorChuva>0</TipoEstacaoRegistradorChuva>
+        <TipoEstacaoTanqueEvapo>0</TipoEstacaoTanqueEvapo>
+        <TipoEstacaoClimatologica>0</TipoEstacaoClimatologica>
+        <TipoEstacaoPiezometria>0</TipoEstacaoPiezometria>
+        <TipoEstacaoTelemetrica>1</TipoEstacaoTelemetrica>
+        <PeriodoEscalaInicio>2012-03-01 00:00:00</PeriodoEscalaInicio>
+        <PeriodoEscalaFim />
+        <PeriodoRegistradorNivelInicio />
+        <PeriodoRegistradorNivelFim />
+        <PeriodoDescLiquidaInicio>2012-03-01 00:00:00</PeriodoDescLiquidaInicio>
+        <PeriodoDescLiquidaFim />
+        <PeriodoSedimentosInicio>2012-03-01 00:00:00</PeriodoSedimentosInicio>
+        <PeriodoSedimentosFim />
+        <PeriodoQualAguaInicio />
+        <PeriodoQualAguaFim />
+        <PeriodoPluviometroInicio />
+        <PeriodoPluviometroFim />
+        <PeriodoRegistradorChuvaInicio />
+        <PeriodoRegistradorChuvaFim />
+        <PeriodoTanqueEvapoInicio />
+        <PeriodoTanqueEvapoFim />
+        <PeriodoClimatologicaInicio />
+        <PeriodoClimatologicaFim />
+        <PeriodoPiezometriaInicio />
+        <PeriodoPiezometriaFim />
+        <PeriodoTelemetricaInicio>2012-03-01 00:00:00</PeriodoTelemetricaInicio>
+        <PeriodoTelemetricaFim />
+        <TipoRedeBasica>0</TipoRedeBasica>
+        <TipoRedeEnergetica>1</TipoRedeEnergetica>
+        <TipoRedeNavegacao>0</TipoRedeNavegacao>
+        <TipoRedeCursoDagua>3</TipoRedeCursoDagua>
+        <TipoRedeEstrategica>0</TipoRedeEstrategica>
+        <TipoRedeCaptacao>6</TipoRedeCaptacao>
+        <TipoRedeSedimentos>0</TipoRedeSedimentos>
+        <TipoRedeQualAgua>0</TipoRedeQualAgua>
+        <TipoRedeClasseVazao>1</TipoRedeClasseVazao>
+        <UltimaAtualizacao>2024-11-13 00:00:00</UltimaAtualizacao>
+        <Operando>1</Operando>
+        <Descricao>RES. ANA/ANEEL N. 0</Descricao>
+        <NumImagens>0</NumImagens>
+        <DataIns>2013-05-16 00:00:00</DataIns>
+        <DataAlt>2024-11-13 00:00:00</DataAlt>
+      </Table>
+      <Table diffgr:id="Table3" msdata:rowOrder="2">
+        <BaciaCodigo>8</BaciaCodigo>
+        <SubBaciaCodigo>83</SubBaciaCodigo>
+        <RioCodigo>83300000</RioCodigo>
+        <RioNome>RIO ITAJAÍ DO NORTE OU HERCÍLIO</RioNome>
+        <EstadoCodigo>23</EstadoCodigo>
+        <nmEstado>SANTA CATARINA</nmEstado>
+        <MunicipioCodigo>23068000</MunicipioCodigo>
+        <nmMunicipio>IBIRAMA</nmMunicipio>
+        <ResponsavelCodigo>1169</ResponsavelCodigo>
+        <ResponsavelSigla>SDE-SC</ResponsavelSigla>
+        <ResponsavelUnidade>23</ResponsavelUnidade>
+        <ResponsavelJurisdicao>1</ResponsavelJurisdicao>
+        <OperadoraCodigo>1169</OperadoraCodigo>
+        <OperadoraSigla>SDE-SC</OperadoraSigla>
+        <OperadoraUnidade>23</OperadoraUnidade>
+        <OperadoraSubUnidade />
+        <TipoEstacao>1</TipoEstacao>
+        <Codigo>83380010</Codigo>
+        <Nome>IBIRAMA</Nome>
+        <CodigoAdicional>SC-7754-I-6</CodigoAdicional>
+        <Latitude>-27.0483</Latitude>
+        <Longitude>-49.5869</Longitude>
+        <Altitude />
+        <AreaDrenagem />
+        <TipoEstacaoEscala>0</TipoEstacaoEscala>
+        <TipoEstacaoRegistradorNivel>0</TipoEstacaoRegistradorNivel>
+        <TipoEstacaoDescLiquida>0</TipoEstacaoDescLiquida>
+        <TipoEstacaoSedimentos>0</TipoEstacaoSedimentos>
+        <TipoEstacaoQualAgua>1</TipoEstacaoQualAgua>
+        <TipoEstacaoPluviometro>0</TipoEstacaoPluviometro>
+        <TipoEstacaoRegistradorChuva>0</TipoEstacaoRegistradorChuva>
+        <TipoEstacaoTanqueEvapo>0</TipoEstacaoTanqueEvapo>
+        <TipoEstacaoClimatologica>0</TipoEstacaoClimatologica>
+        <TipoEstacaoPiezometria>0</TipoEstacaoPiezometria>
+        <TipoEstacaoTelemetrica>0</TipoEstacaoTelemetrica>
+        <PeriodoEscalaInicio />
+        <PeriodoEscalaFim />
+        <PeriodoRegistradorNivelInicio />
+        <PeriodoRegistradorNivelFim />
+        <PeriodoDescLiquidaInicio />
+        <PeriodoDescLiquidaFim />
+        <PeriodoSedimentosInicio />
+        <PeriodoSedimentosFim />
+        <PeriodoQualAguaInicio>2020-07-01 00:00:00</PeriodoQualAguaInicio>
+        <PeriodoQualAguaFim />
+        <PeriodoPluviometroInicio />
+        <PeriodoPluviometroFim />
+        <PeriodoRegistradorChuvaInicio />
+        <PeriodoRegistradorChuvaFim />
+        <PeriodoTanqueEvapoInicio />
+        <PeriodoTanqueEvapoFim />
+        <PeriodoClimatologicaInicio />
+        <PeriodoClimatologicaFim />
+        <PeriodoPiezometriaInicio />
+        <PeriodoPiezometriaFim />
+        <PeriodoTelemetricaInicio />
+        <PeriodoTelemetricaFim />
+        <TipoRedeBasica>0</TipoRedeBasica>
+        <TipoRedeEnergetica>0</TipoRedeEnergetica>
+        <TipoRedeNavegacao>0</TipoRedeNavegacao>
+        <TipoRedeCursoDagua>3</TipoRedeCursoDagua>
+        <TipoRedeEstrategica>0</TipoRedeEstrategica>
+        <TipoRedeCaptacao>7</TipoRedeCaptacao>
+        <TipoRedeSedimentos>0</TipoRedeSedimentos>
+        <TipoRedeQualAgua>3</TipoRedeQualAgua>
+        <TipoRedeClasseVazao>0</TipoRedeClasseVazao>
+        <UltimaAtualizacao>2025-07-24 17:34:23</UltimaAtualizacao>
+        <Operando>1</Operando>
+        <Descricao>RNQA_SC-7754-I-6</Descricao>
+        <NumImagens>0</NumImagens>
+        <DataIns>2020-08-03 00:00:00</DataIns>
+        <DataAlt>2025-07-24 17:34:23</DataAlt>
+      </Table>
+      <Table diffgr:id="Table4" msdata:rowOrder="3">
+        <BaciaCodigo>8</BaciaCodigo>
+        <SubBaciaCodigo>83</SubBaciaCodigo>
+        <RioCodigo>83300000</RioCodigo>
+        <RioNome>RIO ITAJAÍ DO NORTE OU HERCÍLIO</RioNome>
+        <EstadoCodigo>23</EstadoCodigo>
+        <nmEstado>SANTA CATARINA</nmEstado>
+        <MunicipioCodigo>23068000</MunicipioCodigo>
+        <nmMunicipio>IBIRAMA</nmMunicipio>
+        <ResponsavelCodigo>193</ResponsavelCodigo>
+        <ResponsavelSigla>MAFRAS</ResponsavelSigla>
+        <ResponsavelUnidade />
+        <ResponsavelJurisdicao />
+        <OperadoraCodigo>193</OperadoraCodigo>
+        <OperadoraSigla>MAFRAS</OperadoraSigla>
+        <OperadoraUnidade />
+        <OperadoraSubUnidade />
+        <TipoEstacao>1</TipoEstacao>
+        <Codigo>83390000</Codigo>
+        <Nome>DALBERGIA</Nome>
+        <CodigoAdicional />
+        <Latitude>-27.0275</Latitude>
+        <Longitude>-49.5803</Longitude>
+        <Altitude />
+        <AreaDrenagem>3170</AreaDrenagem>
+        <TipoEstacaoEscala>0</TipoEstacaoEscala>
+        <TipoEstacaoRegistradorNivel>0</TipoEstacaoRegistradorNivel>
+        <TipoEstacaoDescLiquida>0</TipoEstacaoDescLiquida>
+        <TipoEstacaoSedimentos>0</TipoEstacaoSedimentos>
+        <TipoEstacaoQualAgua>0</TipoEstacaoQualAgua>
+        <TipoEstacaoPluviometro>0</TipoEstacaoPluviometro>
+        <TipoEstacaoRegistradorChuva>0</TipoEstacaoRegistradorChuva>
+        <TipoEstacaoTanqueEvapo>0</TipoEstacaoTanqueEvapo>
+        <TipoEstacaoClimatologica>0</TipoEstacaoClimatologica>
+        <TipoEstacaoPiezometria>0</TipoEstacaoPiezometria>
+        <TipoEstacaoTelemetrica>0</TipoEstacaoTelemetrica>
+        <PeriodoEscalaInicio>2005-03-01 00:00:00</PeriodoEscalaInicio>
+        <PeriodoEscalaFim>2012-12-01 00:00:00</PeriodoEscalaFim>
+        <PeriodoRegistradorNivelInicio />
+        <PeriodoRegistradorNivelFim />
+        <PeriodoDescLiquidaInicio>2005-03-01 00:00:00</PeriodoDescLiquidaInicio>
+        <PeriodoDescLiquidaFim>2012-12-01 00:00:00</PeriodoDescLiquidaFim>
+        <PeriodoSedimentosInicio />
+        <PeriodoSedimentosFim />
+        <PeriodoQualAguaInicio />
+        <PeriodoQualAguaFim />
+        <PeriodoPluviometroInicio />
+        <PeriodoPluviometroFim />
+        <PeriodoRegistradorChuvaInicio />
+        <PeriodoRegistradorChuvaFim />
+        <PeriodoTanqueEvapoInicio />
+        <PeriodoTanqueEvapoFim />
+        <PeriodoClimatologicaInicio />
+        <PeriodoClimatologicaFim />
+        <PeriodoPiezometriaInicio />
+        <PeriodoPiezometriaFim />
+        <PeriodoTelemetricaInicio />
+        <PeriodoTelemetricaFim />
+        <TipoRedeBasica>0</TipoRedeBasica>
+        <TipoRedeEnergetica>1</TipoRedeEnergetica>
+        <TipoRedeNavegacao>0</TipoRedeNavegacao>
+        <TipoRedeCursoDagua>2</TipoRedeCursoDagua>
+        <TipoRedeEstrategica>0</TipoRedeEstrategica>
+        <TipoRedeCaptacao>6</TipoRedeCaptacao>
+        <TipoRedeSedimentos>0</TipoRedeSedimentos>
+        <TipoRedeQualAgua>0</TipoRedeQualAgua>
+        <TipoRedeClasseVazao>1</TipoRedeClasseVazao>
+        <UltimaAtualizacao>2013-02-27 00:00:00</UltimaAtualizacao>
+        <Operando>0</Operando>
+        <Descricao />
+        <NumImagens>0</NumImagens>
+        <DataIns />
+        <DataAlt>2013-02-27 00:00:00</DataAlt>
+      </Table>
+      <Table diffgr:id="Table5" msdata:rowOrder="4">
+        <BaciaCodigo>8</BaciaCodigo>
+        <SubBaciaCodigo>83</SubBaciaCodigo>
+        <RioCodigo>83300000</RioCodigo>
+        <RioNome>RIO ITAJAÍ DO NORTE OU HERCÍLIO</RioNome>
+        <EstadoCodigo>23</EstadoCodigo>
+        <nmEstado>SANTA CATARINA</nmEstado>
+        <MunicipioCodigo>23068000</MunicipioCodigo>
+        <nmMunicipio>IBIRAMA</nmMunicipio>
+        <ResponsavelCodigo>1</ResponsavelCodigo>
+        <ResponsavelSigla>ANA</ResponsavelSigla>
+        <ResponsavelUnidade>27</ResponsavelUnidade>
+        <ResponsavelJurisdicao>1</ResponsavelJurisdicao>
+        <OperadoraCodigo>1</OperadoraCodigo>
+        <OperadoraSigla>ANA</OperadoraSigla>
+        <OperadoraUnidade />
+        <OperadoraSubUnidade />
+        <TipoEstacao>1</TipoEstacao>
+        <Codigo>83421000</Codigo>
+        <Nome>NOVA BREMEN</Nome>
+        <CodigoAdicional />
+        <Latitude>-27.0167</Latitude>
+        <Longitude>-49.6</Longitude>
+        <Altitude>252</Altitude>
+        <AreaDrenagem>2560</AreaDrenagem>
+        <TipoEstacaoEscala>0</TipoEstacaoEscala>
+        <TipoEstacaoRegistradorNivel>0</TipoEstacaoRegistradorNivel>
+        <TipoEstacaoDescLiquida>0</TipoEstacaoDescLiquida>
+        <TipoEstacaoSedimentos>0</TipoEstacaoSedimentos>
+        <TipoEstacaoQualAgua>0</TipoEstacaoQualAgua>
+        <TipoEstacaoPluviometro>0</TipoEstacaoPluviometro>
+        <TipoEstacaoRegistradorChuva>0</TipoEstacaoRegistradorChuva>
+        <TipoEstacaoTanqueEvapo>0</TipoEstacaoTanqueEvapo>
+        <TipoEstacaoClimatologica>0</TipoEstacaoClimatologica>
+        <TipoEstacaoPiezometria>0</TipoEstacaoPiezometria>
+        <TipoEstacaoTelemetrica>0</TipoEstacaoTelemetrica>
+        <PeriodoEscalaInicio>1928-11-01 00:00:00</PeriodoEscalaInicio>
+        <PeriodoEscalaFim>1967-08-01 00:00:00</PeriodoEscalaFim>
+        <PeriodoRegistradorNivelInicio />
+        <PeriodoRegistradorNivelFim />
+        <PeriodoDescLiquidaInicio />
+        <PeriodoDescLiquidaFim />
+        <PeriodoSedimentosInicio />
+        <PeriodoSedimentosFim />
+        <PeriodoQualAguaInicio />
+        <PeriodoQualAguaFim />
+        <PeriodoPluviometroInicio />
+        <PeriodoPluviometroFim />
+        <PeriodoRegistradorChuvaInicio />
+        <PeriodoRegistradorChuvaFim />
+        <PeriodoTanqueEvapoInicio />
+        <PeriodoTanqueEvapoFim />
+        <PeriodoClimatologicaInicio />
+        <PeriodoClimatologicaFim />
+        <PeriodoPiezometriaInicio />
+        <PeriodoPiezometriaFim />
+        <PeriodoTelemetricaInicio />
+        <PeriodoTelemetricaFim />
+        <TipoRedeBasica>0</TipoRedeBasica>
+        <TipoRedeEnergetica>0</TipoRedeEnergetica>
+        <TipoRedeNavegacao>0</TipoRedeNavegacao>
+        <TipoRedeCursoDagua>3</TipoRedeCursoDagua>
+        <TipoRedeEstrategica>0</TipoRedeEstrategica>
+        <TipoRedeCaptacao>7</TipoRedeCaptacao>
+        <TipoRedeSedimentos>0</TipoRedeSedimentos>
+        <TipoRedeQualAgua>0</TipoRedeQualAgua>
+        <TipoRedeClasseVazao>0</TipoRedeClasseVazao>
+        <UltimaAtualizacao>2005-08-05 00:00:00</UltimaAtualizacao>
+        <Operando>0</Operando>
+        <Descricao />
+        <NumImagens>0</NumImagens>
+        <DataIns />
+        <DataAlt />
+      </Table>
+      <Table diffgr:id="Table6" msdata:rowOrder="5">
+        <BaciaCodigo>8</BaciaCodigo>
+        <SubBaciaCodigo>83</SubBaciaCodigo>
+        <RioCodigo>83300000</RioCodigo>
+        <RioNome>RIO ITAJAÍ DO NORTE OU HERCÍLIO</RioNome>
+        <EstadoCodigo>23</EstadoCodigo>
+        <nmEstado>SANTA CATARINA</nmEstado>
+        <MunicipioCodigo>23068000</MunicipioCodigo>
+        <nmMunicipio>IBIRAMA</nmMunicipio>
+        <ResponsavelCodigo>566</ResponsavelCodigo>
+        <ResponsavelSigla>IBIRAMA</ResponsavelSigla>
+        <ResponsavelUnidade />
+        <ResponsavelJurisdicao />
+        <OperadoraCodigo>566</OperadoraCodigo>
+        <OperadoraSigla>IBIRAMA</OperadoraSigla>
+        <OperadoraUnidade />
+        <OperadoraSubUnidade>1</OperadoraSubUnidade>
+        <TipoEstacao>1</TipoEstacao>
+        <Codigo>83429000</Codigo>
+        <Nome>PCH IBIRAMA MONTANTE</Nome>
+        <CodigoAdicional />
+        <Latitude>-27.0344</Latitude>
+        <Longitude>-49.5681</Longitude>
+        <Altitude>241</Altitude>
+        <AreaDrenagem>3173</AreaDrenagem>
+        <TipoEstacaoEscala>0</TipoEstacaoEscala>
+        <TipoEstacaoRegistradorNivel>0</TipoEstacaoRegistradorNivel>
+        <TipoEstacaoDescLiquida>0</TipoEstacaoDescLiquida>
+        <TipoEstacaoSedimentos>0</TipoEstacaoSedimentos>
+        <TipoEstacaoQualAgua>0</TipoEstacaoQualAgua>
+        <TipoEstacaoPluviometro>0</TipoEstacaoPluviometro>
+        <TipoEstacaoRegistradorChuva>0</TipoEstacaoRegistradorChuva>
+        <TipoEstacaoTanqueEvapo>0</TipoEstacaoTanqueEvapo>
+        <TipoEstacaoClimatologica>0</TipoEstacaoClimatologica>
+        <TipoEstacaoPiezometria>0</TipoEstacaoPiezometria>
+        <TipoEstacaoTelemetrica>0</TipoEstacaoTelemetrica>
+        <PeriodoEscalaInicio>2013-07-01 00:00:00</PeriodoEscalaInicio>
+        <PeriodoEscalaFim>2019-04-01 00:00:00</PeriodoEscalaFim>
+        <PeriodoRegistradorNivelInicio />
+        <PeriodoRegistradorNivelFim />
+        <PeriodoDescLiquidaInicio>2013-07-01 00:00:00</PeriodoDescLiquidaInicio>
+        <PeriodoDescLiquidaFim>2019-04-01 00:00:00</PeriodoDescLiquidaFim>
+        <PeriodoSedimentosInicio>2013-07-01 00:00:00</PeriodoSedimentosInicio>
+        <PeriodoSedimentosFim>2019-04-01 00:00:00</PeriodoSedimentosFim>
+        <PeriodoQualAguaInicio />
+        <PeriodoQualAguaFim />
+        <PeriodoPluviometroInicio />
+        <PeriodoPluviometroFim />
+        <PeriodoRegistradorChuvaInicio />
+        <PeriodoRegistradorChuvaFim />
+        <PeriodoTanqueEvapoInicio />
+        <PeriodoTanqueEvapoFim />
+        <PeriodoClimatologicaInicio />
+        <PeriodoClimatologicaFim />
+        <PeriodoPiezometriaInicio />
+        <PeriodoPiezometriaFim />
+        <PeriodoTelemetricaInicio>2013-07-01 00:00:00</PeriodoTelemetricaInicio>
+        <PeriodoTelemetricaFim>2019-04-01 00:00:00</PeriodoTelemetricaFim>
+        <TipoRedeBasica>0</TipoRedeBasica>
+        <TipoRedeEnergetica>1</TipoRedeEnergetica>
+        <TipoRedeNavegacao>0</TipoRedeNavegacao>
+        <TipoRedeCursoDagua>3</TipoRedeCursoDagua>
+        <TipoRedeEstrategica>0</TipoRedeEstrategica>
+        <TipoRedeCaptacao>6</TipoRedeCaptacao>
+        <TipoRedeSedimentos>0</TipoRedeSedimentos>
+        <TipoRedeQualAgua>0</TipoRedeQualAgua>
+        <TipoRedeClasseVazao>1</TipoRedeClasseVazao>
+        <UltimaAtualizacao>2020-09-10 00:00:00</UltimaAtualizacao>
+        <Operando>0</Operando>
+        <Descricao>RES. ANA/ANEEL N. 0</Descricao>
+        <NumImagens>0</NumImagens>
+        <DataIns>2020-05-26 00:00:00</DataIns>
+        <DataAlt>2020-09-10 00:00:00</DataAlt>
+      </Table>
+      <Table diffgr:id="Table7" msdata:rowOrder="6">
+        <BaciaCodigo>8</BaciaCodigo>
+        <SubBaciaCodigo>83</SubBaciaCodigo>
+        <RioCodigo>83300000</RioCodigo>
+        <RioNome>RIO ITAJAÍ DO NORTE OU HERCÍLIO</RioNome>
+        <EstadoCodigo>23</EstadoCodigo>
+        <nmEstado>SANTA CATARINA</nmEstado>
+        <MunicipioCodigo>23068000</MunicipioCodigo>
+        <nmMunicipio>IBIRAMA</nmMunicipio>
+        <ResponsavelCodigo>566</ResponsavelCodigo>
+        <ResponsavelSigla>IBIRAMA</ResponsavelSigla>
+        <ResponsavelUnidade />
+        <ResponsavelJurisdicao />
+        <OperadoraCodigo>566</OperadoraCodigo>
+        <OperadoraSigla>IBIRAMA</OperadoraSigla>
+        <OperadoraUnidade />
+        <OperadoraSubUnidade>1</OperadoraSubUnidade>
+        <TipoEstacao>1</TipoEstacao>
+        <Codigo>83430000</Codigo>
+        <Nome>PCH IBIRAMA BARRAMENTO</Nome>
+        <CodigoAdicional />
+        <Latitude>-27.0375</Latitude>
+        <Longitude>-49.5686</Longitude>
+        <Altitude>226</Altitude>
+        <AreaDrenagem>3173.38</AreaDrenagem>
+        <TipoEstacaoEscala>1</TipoEstacaoEscala>
+        <TipoEstacaoRegistradorNivel>0</TipoEstacaoRegistradorNivel>
+        <TipoEstacaoDescLiquida>1</TipoEstacaoDescLiquida>
+        <TipoEstacaoSedimentos>0</TipoEstacaoSedimentos>
+        <TipoEstacaoQualAgua>1</TipoEstacaoQualAgua>
+        <TipoEstacaoPluviometro>0</TipoEstacaoPluviometro>
+        <TipoEstacaoRegistradorChuva>0</TipoEstacaoRegistradorChuva>
+        <TipoEstacaoTanqueEvapo>0</TipoEstacaoTanqueEvapo>
+        <TipoEstacaoClimatologica>0</TipoEstacaoClimatologica>
+        <TipoEstacaoPiezometria>0</TipoEstacaoPiezometria>
+        <TipoEstacaoTelemetrica>1</TipoEstacaoTelemetrica>
+        <PeriodoEscalaInicio>2013-06-01 00:00:00</PeriodoEscalaInicio>
+        <PeriodoEscalaFim />
+        <PeriodoRegistradorNivelInicio />
+        <PeriodoRegistradorNivelFim />
+        <PeriodoDescLiquidaInicio>2013-06-01 00:00:00</PeriodoDescLiquidaInicio>
+        <PeriodoDescLiquidaFim />
+        <PeriodoSedimentosInicio />
+        <PeriodoSedimentosFim />
+        <PeriodoQualAguaInicio>2013-06-01 00:00:00</PeriodoQualAguaInicio>
+        <PeriodoQualAguaFim />
+        <PeriodoPluviometroInicio />
+        <PeriodoPluviometroFim />
+        <PeriodoRegistradorChuvaInicio />
+        <PeriodoRegistradorChuvaFim />
+        <PeriodoTanqueEvapoInicio />
+        <PeriodoTanqueEvapoFim />
+        <PeriodoClimatologicaInicio />
+        <PeriodoClimatologicaFim />
+        <PeriodoPiezometriaInicio />
+        <PeriodoPiezometriaFim />
+        <PeriodoTelemetricaInicio>2013-06-01 00:00:00</PeriodoTelemetricaInicio>
+        <PeriodoTelemetricaFim />
+        <TipoRedeBasica>0</TipoRedeBasica>
+        <TipoRedeEnergetica>1</TipoRedeEnergetica>
+        <TipoRedeNavegacao>0</TipoRedeNavegacao>
+        <TipoRedeCursoDagua>3</TipoRedeCursoDagua>
+        <TipoRedeEstrategica>0</TipoRedeEstrategica>
+        <TipoRedeCaptacao>6</TipoRedeCaptacao>
+        <TipoRedeSedimentos>0</TipoRedeSedimentos>
+        <TipoRedeQualAgua>0</TipoRedeQualAgua>
+        <TipoRedeClasseVazao>0</TipoRedeClasseVazao>
+        <UltimaAtualizacao>2020-09-09 00:00:00</UltimaAtualizacao>
+        <Operando>1</Operando>
+        <Descricao>RES. ANA/ANEEL N. 0</Descricao>
+        <NumImagens>0</NumImagens>
+        <DataIns>2014-03-07 00:00:00</DataIns>
+        <DataAlt>2020-09-09 00:00:00</DataAlt>
+      </Table>
+      <Table diffgr:id="Table8" msdata:rowOrder="7">
+        <BaciaCodigo>8</BaciaCodigo>
+        <SubBaciaCodigo>83</SubBaciaCodigo>
+        <RioCodigo>83300000</RioCodigo>
+        <RioNome>RIO ITAJAÍ DO NORTE OU HERCÍLIO</RioNome>
+        <EstadoCodigo>23</EstadoCodigo>
+        <nmEstado>SANTA CATARINA</nmEstado>
+        <MunicipioCodigo>23068000</MunicipioCodigo>
+        <nmMunicipio>IBIRAMA</nmMunicipio>
+        <ResponsavelCodigo>1</ResponsavelCodigo>
+        <ResponsavelSigla>ANA</ResponsavelSigla>
+        <ResponsavelUnidade>27</ResponsavelUnidade>
+        <ResponsavelJurisdicao>1</ResponsavelJurisdicao>
+        <OperadoraCodigo>94</OperadoraCodigo>
+        <OperadoraSigla>EPAGRI-SC</OperadoraSigla>
+        <OperadoraUnidade>23</OperadoraUnidade>
+        <OperadoraSubUnidade>6</OperadoraSubUnidade>
+        <TipoEstacao>1</TipoEstacao>
+        <Codigo>83440000</Codigo>
+        <Nome>IBIRAMA</Nome>
+        <CodigoAdicional />
+        <Latitude>-27.0539</Latitude>
+        <Longitude>-49.5167</Longitude>
+        <Altitude>151</Altitude>
+        <AreaDrenagem>3330</AreaDrenagem>
+        <TipoEstacaoEscala>0</TipoEstacaoEscala>
+        <TipoEstacaoRegistradorNivel>0</TipoEstacaoRegistradorNivel>
+        <TipoEstacaoDescLiquida>1</TipoEstacaoDescLiquida>
+        <TipoEstacaoSedimentos>1</TipoEstacaoSedimentos>
+        <TipoEstacaoQualAgua>1</TipoEstacaoQualAgua>
+        <TipoEstacaoPluviometro>0</TipoEstacaoPluviometro>
+        <TipoEstacaoRegistradorChuva>0</TipoEstacaoRegistradorChuva>
+        <TipoEstacaoTanqueEvapo>0</TipoEstacaoTanqueEvapo>
+        <TipoEstacaoClimatologica>0</TipoEstacaoClimatologica>
+        <TipoEstacaoPiezometria>0</TipoEstacaoPiezometria>
+        <TipoEstacaoTelemetrica>1</TipoEstacaoTelemetrica>
+        <PeriodoEscalaInicio>1928-12-01 00:00:00</PeriodoEscalaInicio>
+        <PeriodoEscalaFim>2021-12-01 00:00:00</PeriodoEscalaFim>
+        <PeriodoRegistradorNivelInicio>1985-11-01 00:00:00</PeriodoRegistradorNivelInicio>
+        <PeriodoRegistradorNivelFim>1996-05-01 00:00:00</PeriodoRegistradorNivelFim>
+        <PeriodoDescLiquidaInicio>1928-12-01 00:00:00</PeriodoDescLiquidaInicio>
+        <PeriodoDescLiquidaFim />
+        <PeriodoSedimentosInicio>1997-04-01 00:00:00</PeriodoSedimentosInicio>
+        <PeriodoSedimentosFim />
+        <PeriodoQualAguaInicio>1986-04-01 00:00:00</PeriodoQualAguaInicio>
+        <PeriodoQualAguaFim />
+        <PeriodoPluviometroInicio />
+        <PeriodoPluviometroFim />
+        <PeriodoRegistradorChuvaInicio />
+        <PeriodoRegistradorChuvaFim />
+        <PeriodoTanqueEvapoInicio />
+        <PeriodoTanqueEvapoFim />
+        <PeriodoClimatologicaInicio />
+        <PeriodoClimatologicaFim />
+        <PeriodoPiezometriaInicio />
+        <PeriodoPiezometriaFim />
+        <PeriodoTelemetricaInicio>1996-05-01 00:00:00</PeriodoTelemetricaInicio>
+        <PeriodoTelemetricaFim />
+        <TipoRedeBasica>1</TipoRedeBasica>
+        <TipoRedeEnergetica>0</TipoRedeEnergetica>
+        <TipoRedeNavegacao>0</TipoRedeNavegacao>
+        <TipoRedeCursoDagua>3</TipoRedeCursoDagua>
+        <TipoRedeEstrategica>0</TipoRedeEstrategica>
+        <TipoRedeCaptacao>6</TipoRedeCaptacao>
+        <TipoRedeSedimentos>1</TipoRedeSedimentos>
+        <TipoRedeQualAgua>3</TipoRedeQualAgua>
+        <TipoRedeClasseVazao>1</TipoRedeClasseVazao>
+        <UltimaAtualizacao>2023-06-19 00:00:00</UltimaAtualizacao>
+        <Operando>1</Operando>
+        <Descricao>TELEMÉTRICA</Descricao>
+        <NumImagens>0</NumImagens>
+        <DataIns />
+        <DataAlt>2023-06-19 00:00:00</DataAlt>
+      </Table>
+      <Table diffgr:id="Table9" msdata:rowOrder="8">
+        <BaciaCodigo>8</BaciaCodigo>
+        <SubBaciaCodigo>83</SubBaciaCodigo>
+        <RioCodigo>83300000</RioCodigo>
+        <RioNome>RIO ITAJAÍ DO NORTE OU HERCÍLIO</RioNome>
+        <EstadoCodigo>23</EstadoCodigo>
+        <nmEstado>SANTA CATARINA</nmEstado>
+        <MunicipioCodigo>23068000</MunicipioCodigo>
+        <nmMunicipio>IBIRAMA</nmMunicipio>
+        <ResponsavelCodigo>15</ResponsavelCodigo>
+        <ResponsavelSigla>CELESC</ResponsavelSigla>
+        <ResponsavelUnidade />
+        <ResponsavelJurisdicao />
+        <OperadoraCodigo>15</OperadoraCodigo>
+        <OperadoraSigla>CELESC</OperadoraSigla>
+        <OperadoraUnidade />
+        <OperadoraSubUnidade>1</OperadoraSubUnidade>
+        <TipoEstacao>1</TipoEstacao>
+        <Codigo>83441000</Codigo>
+        <Nome>PCH SALTO RIO ITAJAÍ DO NORTE</Nome>
+        <CodigoAdicional />
+        <Latitude>-27.0536</Latitude>
+        <Longitude>-49.5164</Longitude>
+        <Altitude>153</Altitude>
+        <AreaDrenagem>3314</AreaDrenagem>
+        <TipoEstacaoEscala>1</TipoEstacaoEscala>
+        <TipoEstacaoRegistradorNivel>0</TipoEstacaoRegistradorNivel>
+        <TipoEstacaoDescLiquida>1</TipoEstacaoDescLiquida>
+        <TipoEstacaoSedimentos>1</TipoEstacaoSedimentos>
+        <TipoEstacaoQualAgua>0</TipoEstacaoQualAgua>
+        <TipoEstacaoPluviometro>0</TipoEstacaoPluviometro>
+        <TipoEstacaoRegistradorChuva>0</TipoEstacaoRegistradorChuva>
+        <TipoEstacaoTanqueEvapo>0</TipoEstacaoTanqueEvapo>
+        <TipoEstacaoClimatologica>0</TipoEstacaoClimatologica>
+        <TipoEstacaoPiezometria>0</TipoEstacaoPiezometria>
+        <TipoEstacaoTelemetrica>1</TipoEstacaoTelemetrica>
+        <PeriodoEscalaInicio>2002-04-01 00:00:00</PeriodoEscalaInicio>
+        <PeriodoEscalaFim />
+        <PeriodoRegistradorNivelInicio />
+        <PeriodoRegistradorNivelFim />
+        <PeriodoDescLiquidaInicio>2002-04-01 00:00:00</PeriodoDescLiquidaInicio>
+        <PeriodoDescLiquidaFim />
+        <PeriodoSedimentosInicio>2011-06-01 00:00:00</PeriodoSedimentosInicio>
+        <PeriodoSedimentosFim />
+        <PeriodoQualAguaInicio />
+        <PeriodoQualAguaFim />
+        <PeriodoPluviometroInicio />
+        <PeriodoPluviometroFim />
+        <PeriodoRegistradorChuvaInicio />
+        <PeriodoRegistradorChuvaFim />
+        <PeriodoTanqueEvapoInicio />
+        <PeriodoTanqueEvapoFim />
+        <PeriodoClimatologicaInicio />
+        <PeriodoClimatologicaFim />
+        <PeriodoPiezometriaInicio />
+        <PeriodoPiezometriaFim />
+        <PeriodoTelemetricaInicio>2003-12-01 00:00:00</PeriodoTelemetricaInicio>
+        <PeriodoTelemetricaFim />
+        <TipoRedeBasica>0</TipoRedeBasica>
+        <TipoRedeEnergetica>1</TipoRedeEnergetica>
+        <TipoRedeNavegacao>0</TipoRedeNavegacao>
+        <TipoRedeCursoDagua>3</TipoRedeCursoDagua>
+        <TipoRedeEstrategica>0</TipoRedeEstrategica>
+        <TipoRedeCaptacao>6</TipoRedeCaptacao>
+        <TipoRedeSedimentos>0</TipoRedeSedimentos>
+        <TipoRedeQualAgua>0</TipoRedeQualAgua>
+        <TipoRedeClasseVazao>1</TipoRedeClasseVazao>
+        <UltimaAtualizacao>2019-09-23 00:00:00</UltimaAtualizacao>
+        <Operando>1</Operando>
+        <Descricao>RES. ANA/ANEEL N. 0</Descricao>
+        <NumImagens>0</NumImagens>
+        <DataIns>2016-06-17 00:00:00</DataIns>
+        <DataAlt>2019-09-23 00:00:00</DataAlt>
+      </Table>
+      <Table diffgr:id="Table10" msdata:rowOrder="9">
+        <BaciaCodigo>8</BaciaCodigo>
+        <SubBaciaCodigo>83</SubBaciaCodigo>
+        <RioCodigo>83300000</RioCodigo>
+        <RioNome>RIO ITAJAÍ DO NORTE OU HERCÍLIO</RioNome>
+        <EstadoCodigo>23</EstadoCodigo>
+        <nmEstado>SANTA CATARINA</nmEstado>
+        <MunicipioCodigo>23068000</MunicipioCodigo>
+        <nmMunicipio>IBIRAMA</nmMunicipio>
+        <ResponsavelCodigo>1169</ResponsavelCodigo>
+        <ResponsavelSigla>SDE-SC</ResponsavelSigla>
+        <ResponsavelUnidade>23</ResponsavelUnidade>
+        <ResponsavelJurisdicao>1</ResponsavelJurisdicao>
+        <OperadoraCodigo>1169</OperadoraCodigo>
+        <OperadoraSigla>SDE-SC</OperadoraSigla>
+        <OperadoraUnidade>23</OperadoraUnidade>
+        <OperadoraSubUnidade />
+        <TipoEstacao>1</TipoEstacao>
+        <Codigo>83448000</Codigo>
+        <Nome>IBIRAMA</Nome>
+        <CodigoAdicional>SC-7754-I-14</CodigoAdicional>
+        <Latitude>-27.0781</Latitude>
+        <Longitude>-49.4975</Longitude>
+        <Altitude />
+        <AreaDrenagem />
+        <TipoEstacaoEscala>0</TipoEstacaoEscala>
+        <TipoEstacaoRegistradorNivel>0</TipoEstacaoRegistradorNivel>
+        <TipoEstacaoDescLiquida>0</TipoEstacaoDescLiquida>
+        <TipoEstacaoSedimentos>0</TipoEstacaoSedimentos>
+        <TipoEstacaoQualAgua>1</TipoEstacaoQualAgua>
+        <TipoEstacaoPluviometro>0</TipoEstacaoPluviometro>
+        <TipoEstacaoRegistradorChuva>0</TipoEstacaoRegistradorChuva>
+        <TipoEstacaoTanqueEvapo>0</TipoEstacaoTanqueEvapo>
+        <TipoEstacaoClimatologica>0</TipoEstacaoClimatologica>
+        <TipoEstacaoPiezometria>0</TipoEstacaoPiezometria>
+        <TipoEstacaoTelemetrica>0</TipoEstacaoTelemetrica>
+        <PeriodoEscalaInicio />
+        <PeriodoEscalaFim />
+        <PeriodoRegistradorNivelInicio />
+        <PeriodoRegistradorNivelFim />
+        <PeriodoDescLiquidaInicio />
+        <PeriodoDescLiquidaFim />
+        <PeriodoSedimentosInicio />
+        <PeriodoSedimentosFim />
+        <PeriodoQualAguaInicio>2020-04-01 00:00:00</PeriodoQualAguaInicio>
+        <PeriodoQualAguaFim />
+        <PeriodoPluviometroInicio />
+        <PeriodoPluviometroFim />
+        <PeriodoRegistradorChuvaInicio />
+        <PeriodoRegistradorChuvaFim />
+        <PeriodoTanqueEvapoInicio />
+        <PeriodoTanqueEvapoFim />
+        <PeriodoClimatologicaInicio />
+        <PeriodoClimatologicaFim />
+        <PeriodoPiezometriaInicio />
+        <PeriodoPiezometriaFim />
+        <PeriodoTelemetricaInicio />
+        <PeriodoTelemetricaFim />
+        <TipoRedeBasica>0</TipoRedeBasica>
+        <TipoRedeEnergetica>0</TipoRedeEnergetica>
+        <TipoRedeNavegacao>0</TipoRedeNavegacao>
+        <TipoRedeCursoDagua>2</TipoRedeCursoDagua>
+        <TipoRedeEstrategica>0</TipoRedeEstrategica>
+        <TipoRedeCaptacao>7</TipoRedeCaptacao>
+        <TipoRedeSedimentos>0</TipoRedeSedimentos>
+        <TipoRedeQualAgua>10</TipoRedeQualAgua>
+        <TipoRedeClasseVazao>1</TipoRedeClasseVazao>
+        <UltimaAtualizacao>2025-07-24 17:34:23</UltimaAtualizacao>
+        <Operando>1</Operando>
+        <Descricao>RNQA_SC-7754-I-14</Descricao>
+        <NumImagens>0</NumImagens>
+        <DataIns>2020-04-07 00:00:00</DataIns>
+        <DataAlt>2025-07-24 17:34:23</DataAlt>
+      </Table>
+    </Estacoes>
+  </diffgr:diffgram>
+</DataSet>

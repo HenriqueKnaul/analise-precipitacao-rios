@@ -7,5 +7,6 @@ data/*.sqlite*
 data/backups/
 output/
 node_modules/
+.npm-cache/
 debug.log
 tests/tmp*/

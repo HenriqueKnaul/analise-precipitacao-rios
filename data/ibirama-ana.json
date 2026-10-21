@@ -1,0 +1,16 @@
+{
+  "code": "83440000",
+  "name": "Ibirama · Rio Itajaí do Norte / Hercílio",
+  "latitude": -27.0539,
+  "longitude": -49.5167,
+  "unit": "cm",
+  "statistic": "daily_mean",
+  "datum": null,
+  "inventory_reference": "https://www.ana.gov.br/telemetria1ws/ServiceANA.asmx?op=HidroInventario",
+  "service_reference": "https://www.ana.gov.br/telemetria1ws/ServiceANA.asmx?op=HidroSerieHistorica",
+  "note": "Cadastro ANA consultado em 21/10/2026; responsável ANA, operadora EPAGRI-SC. Referencial altimétrico não informado. Cotas diárias em cm, não elevação absoluta. Somente consistência 2 e status diário 1 são importados.",
+  "inventory_artifact": "data/raw/ana-inventory-49cb2415214e1aa5b482c0d98e5ffffd8ddf52832357be4d3202acd98af16041.raw",
+  "inventory_sha256": "49cb2415214e1aa5b482c0d98e5ffffd8ddf52832357be4d3202acd98af16041",
+  "data_dictionary": "https://www.ana.gov.br/arquivos/infohidrologicas/cadastro/OrientacoesParaEnvioDosDadosHidrologicosColetadosDuranteaResolucaoANEEL_396_1998.pdf",
+  "dictionary_note": "Dicionário Hidro, p.22–24: MediaDiaria=1, TipoMedicaoCotas=1 (escala), CotaNN em cm, status 1 real. Consistência usa a enumeração do serviço atual: 1 bruto, 2 consistido."
+}

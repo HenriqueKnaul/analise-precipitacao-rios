@@ -2,7 +2,7 @@ from datetime import date
 from contextlib import closing
 from typing import Literal
 from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from .db import ROOT, connect, initialize
 from .series import series, compare
@@ -10,12 +10,27 @@ from .series import series, compare
 app = FastAPI(title='Chuva x Rio', version='1.0.0')
 with closing(connect()) as db:
     initialize(db)
+@app.get('/static/index.html',include_in_schema=False)
+def redirect_legacy_index():
+    return RedirectResponse('../',status_code=307)
+
+
+@app.get('/style.css',include_in_schema=False)
+def stylesheet():
+    return FileResponse(ROOT/'static'/'style.css',media_type='text/css',headers={'Cache-Control':'no-cache'})
+
+
+@app.get('/app.js',include_in_schema=False)
+def javascript():
+    return FileResponse(ROOT/'static'/'app.js',media_type='text/javascript',headers={'Cache-Control':'no-cache'})
+
+
 app.mount('/static',StaticFiles(directory=ROOT/'static'),name='static')
 
 
 @app.get('/')
 def home():
-    return FileResponse(ROOT/'static'/'index.html')
+    return FileResponse(ROOT/'static'/'index.html',headers={'Cache-Control':'no-cache'})
 
 
 @app.get('/api/catalog')
@@ -56,7 +71,8 @@ def get_comparison(events: str, stations: str, resolution: Literal['daily','mont
     event_ids, station_ids = events.split(','), stations.split(',')
     if not 1 <= len(event_ids) <= 3 or len(set(event_ids))!=len(event_ids) or not 1<=len(station_ids)<=2:
         raise HTTPException(422,'Selecione de um a três períodos e até duas variáveis.')
-    validate_range(current_start,current_end)
+    if any(e in ('current','custom') for e in event_ids):
+        validate_range(current_start,current_end)
     with closing(connect()) as db:
         if len(set(station_ids)) != len(station_ids) or any(
             not db.execute('SELECT 1 FROM station WHERE id=?',(station,)).fetchone() for station in station_ids
@@ -64,10 +80,11 @@ def get_comparison(events: str, stations: str, resolution: Literal['daily','mont
             raise HTTPException(422,'Estação desconhecida ou repetida.')
         windows = []
         for event_id in event_ids:
-            if event_id=='current':
+            if event_id in ('current','custom'):
                 if current_end > date.today():
                     raise HTTPException(422,'A janela atual não pode incluir datas futuras.')
-                windows.append(dict(id='current',start=current_start,end=current_end,label='Período atual',current=True))
+                windows.append(dict(id=event_id,start=current_start,end=current_end,
+                                    label='Período atual' if event_id=='current' else 'Intervalo escolhido',current=event_id=='current'))
             else:
                 event = db.execute('SELECT * FROM event WHERE id=?',(event_id,)).fetchone()
                 if not event:

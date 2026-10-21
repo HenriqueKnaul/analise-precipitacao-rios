@@ -8,6 +8,8 @@ import math
 import re
 from datetime import date, datetime, timezone
 from urllib.request import urlopen, Request
+from urllib.parse import urlencode
+import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup
 from .db import ROOT
 
@@ -65,7 +67,9 @@ def run(db, source, reference, acquire, consume):
 
 def store(db, station, day, value, unit, run_id, counts):
     try:
-        date.fromisoformat(day)
+        # Python also accepts basic and ISO-week date forms. Persist one canonical
+        # civil-date key so aliases cannot escape range queries or uniqueness.
+        day = date.fromisoformat(day).isoformat()
         value_number = float(str(value).replace(',', '.'))
         expected = ('mm','mm/day') if station['kind'] == 'grid' else ('m', 'cm')
         if unit not in expected or not math.isfinite(value_number) or value_number == -999:
@@ -106,6 +110,12 @@ def import_noaa(db, path=None):
         if len(rows) < 12 or len({r[0] for r in rows}) != len(rows):
             raise ValueError('Tabela RONI incompleta ou duplicada')
         previous_rows = {r['date']:(r['value'],r['phase']) for r in db.execute('SELECT * FROM enso_index')}
+        incoming_dates = {day for day, _, _ in rows}
+        missing_dates = previous_rows.keys() - incoming_dates
+        if missing_dates:
+            raise ValueError(
+                f'Tabela RONI truncada: {len(missing_dates)} temporadas já armazenadas ausentes; histórico preservado'
+            )
         if previous_rows == {d:(v,p) for d,v,p in rows}:
             counts['duplicates'] = len(rows)
             return
@@ -176,8 +186,65 @@ def import_river(db, path, metadata):
             raise ValueError('CSV normalizado deve ter cabeçalho date,value')
         seen = set()
         for row in reader:
-            if row['date'] in seen:
+            try:
+                day = date.fromisoformat(row['date']).isoformat()
+            except (TypeError, ValueError):
+                day = row['date']  # store records the invalid date as rejected.
+            if day in seen:
                 raise ValueError('Data duplicada no arquivo; resolva a consistência na origem')
-            seen.add(row['date'])
-            store(db,station,row['date'],row['value'],metadata['unit'],run_id,counts)
+            seen.add(day)
+            store(db,station,day,row['value'],metadata['unit'],run_id,counts)
     return run(db,'ana',json.dumps(metadata,ensure_ascii=False),path.read_bytes,consume)
+
+
+def parse_ana(raw, code, start, end):
+    """Read only documented daily means, consistent and real (status 1).
+
+    No estimated/questionable/absent values are silently included. The original
+    XML remains the authoritative record of all flags and rejected values.
+    """
+    root = ET.fromstring(raw)
+    rows = []
+    for element in root.iter():
+        if element.tag.split('}')[-1] != 'SerieHistorica':
+            continue
+        row = {child.tag.split('}')[-1]: child.text for child in element}
+        if row.get('EstacaoCodigo') != str(code) or row.get('NivelConsistencia') != '2':
+            raise ValueError('Estação ou nível de consistência diferente do solicitado')
+        if row.get('MediaDiaria') != '1' or row.get('TipoMedicaoCotas') != '1':
+            raise ValueError('Série não identificada como média diária de cotas')
+        month = date.fromisoformat(row['DataHora'][:10]).replace(day=1)
+        for day in range(1,calendar.monthrange(month.year,month.month)[1]+1):
+            stamp = month.replace(day=day)
+            if start <= stamp <= end:
+                key = f'Cota{day:02}'
+                value = row.get(key) if row.get(key+'Status') == '1' else None
+                rows.append((stamp.isoformat(),value))
+    if not rows:
+        raise ValueError('ANA não retornou médias diárias consistidas neste intervalo')
+    return rows
+
+
+def import_ana(db, metadata, start, end, path=None):
+    required=('code','name','latitude','longitude','inventory_reference','unit','statistic')
+    if any(key not in metadata for key in required) or metadata['unit']!='cm' or metadata['statistic']!='daily_mean':
+        raise ValueError('Metadados ANA incompletos; informe média diária em cm e referência do inventário')
+    params=dict(codEstacao=str(metadata['code']),dataInicio=start.strftime('%d/%m/%Y'),
+                dataFim=end.strftime('%d/%m/%Y'),tipoDados='1',nivelConsistencia='2')
+    url='https://www.ana.gov.br/telemetria1ws/ServiceANA.asmx/HidroSerieHistorica?'+urlencode(params)
+    reference=dict(metadata,request_url=url,adapter='ana-xml-v1',rule='CotaNN: MediaDiaria=1, TipoMedicaoCotas=1, NivelConsistencia=2, status=1; cm/100 -> m')
+    def consume(raw,run_id,counts):
+        rows=parse_ana(raw,metadata['code'],start,end)
+        values=('ana-'+str(metadata['code']),'ana',metadata['name'],'river',metadata['latitude'],metadata['longitude'],metadata.get('datum'))
+        old=db.execute('SELECT * FROM station WHERE id=?',(values[0],)).fetchone()
+        if old and tuple(old)!=values:
+            raise ValueError('Metadados diferentes do cadastro existente')
+        db.execute('INSERT OR IGNORE INTO station VALUES(?,?,?,?,?,?,?)',values)
+        station=db.execute('SELECT * FROM station WHERE id=?',(values[0],)).fetchone()
+        seen={}
+        for day,value in rows:
+            if day in seen and seen[day]!=value:
+                raise ValueError('Valores conflitantes no XML para a mesma data')
+            seen[day]=value
+            store(db,station,day,value,'cm',run_id,counts)
+    return run(db,'ana',json.dumps(reference,ensure_ascii=False),path.read_bytes if path else lambda:fetch(url),consume)

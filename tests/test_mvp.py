@@ -8,7 +8,7 @@ from datetime import date
 from pathlib import Path
 from unittest.mock import patch
 from app.db import connect, initialize, ROOT
-from app.ingest import run, store, import_river, import_noaa, import_nasa
+from app.ingest import run, store, import_river, import_noaa, import_nasa, import_ana, parse_ana
 from app.series import series, compare
 
 
@@ -103,6 +103,49 @@ class DataTests(unittest.TestCase):
         result=compare(self.db,[self.station['id']],windows,'monthly')
         self.assertEqual([s['end'] for s in result['series']],['2023-02-28','2024-04-30'])
 
+    def test_partial_calendar_month_even_with_complete_window(self):
+        self.load([('2024-02-01',2,'mm'),('2024-02-02',3,'mm')])
+        s=series(self.db,self.station['id'],date(2024,2,1),date(2024,2,2))
+        self.assertEqual(s['coverage'],100)
+        self.assertTrue(s['points'][0]['partial'])
+        self.assertTrue(s['points'][0]['window_partial'])
+        self.assertEqual(s['points'][0]['calendar_expected'],29)
+
+    def test_midmonth_comparison_requires_daily_or_original_lengths(self):
+        windows=[dict(id='a',label='a',start=date(2024,1,25),end=date(2024,1,27)),
+                 dict(id='b',label='b',start=date(2023,1,1),end=date(2023,1,10))]
+        with self.assertRaisesRegex(ValueError,'dia 1'):
+            compare(self.db,[self.station['id']],windows,'monthly')
+        for resolution,common in [('daily',True),('monthly',False)]:
+            result=compare(self.db,[self.station['id']],windows,resolution,common)
+            self.assertTrue(all(s['expected']>0 for s in result['series']))
+        one=compare(self.db,[self.station['id']],windows[:1],'monthly')
+        self.assertEqual(one['series'][0]['expected'],3)
+
+    def test_ana_quality_flags_and_cm_conversion(self):
+        xml=b'''<root><SerieHistorica><EstacaoCodigo>TEST</EstacaoCodigo><NivelConsistencia>2</NivelConsistencia>
+        <MediaDiaria>1</MediaDiaria><TipoMedicaoCotas>1</TipoMedicaoCotas><DataHora>2024-02-01T00:00:00</DataHora>
+        <Cota01>100</Cota01><Cota01Status>1</Cota01Status><Cota02>250</Cota02><Cota02Status>2</Cota02Status>
+        <Cota03>0</Cota03><Cota03Status>1</Cota03Status></SerieHistorica></root>'''
+        start,end=date(2024,2,1),date(2024,2,3)
+        self.assertEqual(parse_ana(xml,'TEST',start,end),[('2024-02-01','100'),('2024-02-02',None),('2024-02-03','0')])
+        with self.assertRaises(ValueError): parse_ana(xml,'DIFFERENT',start,end)
+        with self.assertRaises(ValueError): parse_ana(xml.replace(b'<MediaDiaria>1',b'<MediaDiaria>0'),'TEST',start,end)
+        path=Path(self.tmp.name)/'test.xml';path.write_bytes(xml)
+        meta=dict(code='TEST',name='TEST ONLY',latitude=0,longitude=0,inventory_reference='https://example.org/test',unit='cm',statistic='daily_mean')
+        result=import_ana(self.db,meta,start,end,path)
+        self.assertEqual((result['inserted'],result['rejected']),(2,1))
+        s=series(self.db,'ana-TEST',start,end,'daily')
+        self.assertEqual([p['value'] for p in s['points']],[1,None,0])
+        self.assertEqual(import_ana(self.db,meta,start,end,path)['duplicates'],2)
+        path.write_bytes(xml.replace(b'</root>',xml[6:]))
+        failed=import_ana(self.db,meta,start,end,path)
+        # Identical duplicate records are idempotent; conflicting duplicates roll back.
+        self.assertEqual(failed['status'],'parcial')
+        path.write_bytes(xml.replace(b'</root>',xml[6:].replace(b'<Cota01>100',b'<Cota01>300')))
+        self.assertEqual(import_ana(self.db,meta,start,end,path)['status'],'falha')
+        self.assertEqual(self.db.execute("SELECT value FROM measurement WHERE station_id='ana-TEST' AND date='2024-02-01'").fetchone()[0],1)
+
     def test_foreign_keys_and_backup(self):
         self.load([('2024-01-01',5,'mm')])
         with self.assertRaises(sqlite3.IntegrityError):
@@ -121,11 +164,16 @@ class ApiTests(unittest.TestCase):
                 with closing(connect()) as db: initialize(db)
                 with TestClient(app) as client:
                     self.assertEqual(client.get('/').status_code,200)
+                    self.assertIn('text/css',client.get('/style.css').headers['content-type'])
+                    self.assertIn('javascript',client.get('/app.js').headers['content-type'])
+                    self.assertEqual(client.get('/static/index.html',follow_redirects=False).status_code,307)
                     self.assertEqual(client.get('/api/catalog').json()['events'],[])
                     self.assertEqual(client.get('/api/series?station=power-ibirama&start=2024-02-02&end=2024-02-01').status_code,422)
                     self.assertEqual(client.get('/api/compare?events=unknown&stations=power-ibirama').status_code,422)
                     s=client.get('/api/series?station=power-ibirama&start=2024-01-01&end=2024-01-02').json()
                     self.assertEqual(s['valid'],0);self.assertIsNone(s['points'][0]['value'])
+                    custom=client.get('/api/compare',params=dict(events='custom',stations='power-ibirama',current_start='2024-01-25',current_end='2024-01-27')).json()
+                    self.assertEqual(custom['series'][0]['expected'],3)
 
 
 if __name__=='__main__': unittest.main()

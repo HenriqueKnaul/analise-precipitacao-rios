@@ -21,8 +21,11 @@ def series(db, station_id, start, end, resolution='monthly'):
         value = None
         if samples:
             value = sum(samples) if station['kind']=='grid' else sum(samples)/len(samples)
+        calendar_days = calendar.monthrange(cursor.year,cursor.month)[1]
+        window_partial = resolution=='monthly' and (cursor.day!=1 or stop.day!=calendar_days)
         points.append(dict(date=cursor.isoformat(),end=stop.isoformat(),value=round(value,4) if value is not None else None,
-                           valid=len(samples),expected=days,partial=0<len(samples)<days))
+                           valid=len(samples),expected=days,calendar_expected=calendar_days if resolution=='monthly' else 1,
+                           window_partial=window_partial,partial=window_partial or 0<len(samples)<days))
         cursor = stop+timedelta(days=1)
     expected = (end-start).days+1
     return dict(station=dict(station), unit='mm' if station['kind']=='grid' else 'm',
@@ -35,6 +38,8 @@ def series(db, station_id, start, end, resolution='monthly'):
 
 
 def compare(db, station_ids, windows, resolution, common=True):
+    if resolution=='monthly' and common and len(windows)>1 and any(w['start'].day!=1 for w in windows):
+        raise ValueError('Para comparar meses com trecho comum, inicie os períodos no dia 1. Use resolução diária ou desative o trecho comum para outras datas.')
     # A current window is clipped to the common last observation across variables.
     adjusted = []
     cutoffs = {}
@@ -59,7 +64,7 @@ def compare(db, station_ids, windows, resolution, common=True):
         return dict(series=[],cutoffs=cutoffs,common_length=0,
                     reason='Sem cobertura atual para todas as variáveis selecionadas. Consulte uma variável disponível separadamente.')
     lengths = [(w['end']-w['start']).days+1 for w in adjusted]
-    if common:
+    if common and len(adjusted)>1:
         if resolution=='daily':
             length = min(lengths)
             for w in adjusted:
