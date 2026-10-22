@@ -4,12 +4,13 @@ Revisão de 22/10/2026 sobre a aplicação existente em Python/FastAPI, SQLite e
 
 ## Implementação
 
-- Quatro áreas: Visão Geral, Análise Histórica, Comparação de Fenômenos e Dados e Metodologia.
+- Quatro áreas: Visão geral, Explorar histórico, Comparar períodos e Fontes e método; todas visíveis também na navegação móvel.
+- Filtros agrupados por período e dados, com local/resolução sob demanda; comparação guiada por etapas e um cartão de resultados por período. Amostra, máximos e procedência permanecem acessíveis em detalhes expansíveis.
 - Histórico por ano ou intervalo de até cinco anos, fase ENSO, ponto de precipitação, variável e resolução diária/mensal.
 - Comparação de até três episódios, anos ou intervalos, com duração comum opcional, cobertura e médias diárias descritivas.
 - Classificação de El Niño, La Niña e neutralidade a partir das marcações oficiais da tabela RONI ERSSTv6 NOAA/CPC, preservando os meses sem classificação.
 - Séries reais, lacunas explícitas, tabela acessível e CSV com procedência, unidades e classificação.
-- Gráficos separados para chuva (mm) e nível (m), leitura por cursor/teclado, estados de consulta e erro, navegação responsiva.
+- Gráficos separados para chuva (mm) e nível (m), leitura por cursor/teclado, estados de consulta e erro, navegação responsiva. Cores e legendas distinguem El Niño, La Niña, neutralidade e meses sem classificação; a comparação também diferencia períodos da mesma fase.
 
 ## Dados preservados
 

@@ -40,11 +40,11 @@ Nos exemplos seguintes, `python` representa o executável do ambiente virtual. U
 | Área | Funcionalidades |
 | --- | --- |
 | **Visão Geral** | Indicadores de dados e cobertura, resumo gráfico e atalhos para explorar a base. |
-| **Análise Histórica** | Seleção de anos e datas, El Niño/La Niña/neutro, ponto municipal, variável e resolução diária/mensal. Valores, cobertura e máximos observados no intervalo. |
-| **Comparação de Fenômenos** | Comparação entre fases e entre períodos, unidades e escalas coerentes, contagens de dias e lacunas explícitas. |
-| **Dados e Metodologia** | Fontes oficiais, calendário ENSO, critérios de agregação, cobertura por estação e histórico de cargas. |
+| **Explorar histórico** | Escolha primeiro o período e os dados; ponto, estação e resolução ficam em “Local e detalhamento”. Valores, cobertura e máximos observados no intervalo. |
+| **Comparar períodos** | Exemplo El Niño × La Niña ou até três períodos personalizados, com um cartão por período, duração comum opcional e lacunas explícitas. |
+| **Fontes e método** | Fontes oficiais, calendário ENSO, critérios de agregação, cobertura por estação e histórico de cargas. |
 
-Gráficos respondem às seleções; os valores podem ser consultados nos pontos, nas tabelas e no CSV. Chuva e nível têm painéis e unidades distintos. Veja o [roteiro de apresentação](docs/DEMONSTRACAO.md) e os [resultados de validação](docs/STATUS_MVP.md).
+Gráficos respondem às seleções; os valores podem ser consultados nos pontos, nas tabelas e no CSV. Chuva e nível têm painéis e unidades distintos. El Niño aparece em laranja, La Niña em azul e neutralidade em verde; meses sem classificação ficam em cinza. Detalhes de amostra, máximos e procedência podem ser expandidos. Veja o [roteiro de apresentação](docs/DEMONSTRACAO.md) e os [resultados de validação](docs/STATUS_MVP.md).
 
 Para demonstrar **El Niño, La Niña e neutralidade no mesmo ano**, consulte **2016**, que tem precipitação e nível durante todo o ano. **1998** também atravessa as três fases, mas o nível possui lacunas. **2023–2024** mostra chuva real e explicita a indisponibilidade de nível no snapshot.
 

@@ -188,6 +188,8 @@ async function runInterfaceChecks(page, catalog) {
   const neutral = await historyChange(() => page.locator("#h-phase").selectOption("neutral"));
   assert.equal(neutral.valid, 31);
   assert.equal(warm.valid + cold.valid + neutral.valid, whole.valid);
+  assert.equal(await page.locator("#h-rain").isVisible(), false);
+  await page.locator("#h-options > summary").click();
   const otherStation = await historyChange(() => page.locator("#h-rain").selectOption("power-presidente"), "power-presidente");
   assert.equal(otherStation.station.id, "power-presidente");
   assert.match(await page.locator("#h-charts").innerText(), /Presidente Getúlio/);
@@ -235,6 +237,8 @@ async function runInterfaceChecks(page, catalog) {
   let comparison = await compareChange(() => page.locator("#tab-comparison").click());
   assert.equal(comparison.series.length, 2);
   assert.deepEqual(new Set(comparison.series.map((s) => s.window_phase)), new Set(["warm", "cold"]));
+  assert.equal(await page.locator("#event-phase").isVisible(), false);
+  await page.locator("#period-editor > summary").click();
   await page.locator("#event-phase").selectOption("neutral");
   const neutralEvent = catalog.events.find((e) => e.phase === "neutral" && e.start === "2016-05-01");
   await page.locator("#event-select").selectOption(neutralEvent.id);
@@ -355,6 +359,7 @@ async function checkResilience(page, historyChange, settle) {
 }
 
 async function checkLayouts(page) {
+  await page.locator("details").evaluateAll((items) => items.forEach((item) => item.open = false));
   const names = { overview: "dashboard", history: "historico", comparison: "comparacao", methodology: "metodologia" };
   for (const width of [1366, 768, 360]) {
     await page.setViewportSize({ width, height: 1000 });
@@ -364,7 +369,7 @@ async function checkLayouts(page) {
       assert.equal(await page.getByRole("tabpanel").count(), 1);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `page overflow at ${width}, ${tab}`);
       await page.screenshot({ path: path.join(screenshots, `${filename}-${width}.png`), fullPage: true, animations: "disabled" });
-      for (const summary of await page.locator(`#panel-${tab} details summary`).all()) {
+      for (const summary of await page.locator(`#panel-${tab} details summary:visible`).all()) {
         await summary.click();
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `expanded table overflow at ${width}, ${tab}`);
         await summary.click();
