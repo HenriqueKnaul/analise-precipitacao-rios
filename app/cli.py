@@ -4,7 +4,7 @@ import sqlite3
 from contextlib import closing
 from pathlib import Path
 from datetime import date, timedelta
-from .db import connect, initialize, ROOT
+from .db import connect, initialize, rebuild_events, ROOT
 from .ingest import import_noaa, import_nasa, import_river, import_ana
 
 
@@ -35,6 +35,8 @@ def main():
                         placeholders=','.join('?' for _ in row)
                         columns=','.join(row)
                         db.execute(f'INSERT OR REPLACE INTO {table} ({columns}) VALUES ({placeholders})',list(row.values()))
+                # Also support older snapshots whose events only covered El Niño.
+                rebuild_events(db)
             print('Snapshot real carregado. Consulte data/README.md para cobertura e limitações.')
         elif args.command=='noaa': results.append(import_noaa(db,args.file))
         elif args.command=='nasa':

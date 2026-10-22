@@ -92,7 +92,7 @@ class DataTests(unittest.TestCase):
         path=Path(self.tmp.name)/'noaa.html';path.write_text('<table>'+''.join(rows)+'</table>')
         r=import_noaa(self.db,path)
         self.assertEqual(r['inserted'],24)
-        events=self.db.execute('SELECT * FROM event ORDER BY start').fetchall()
+        events=self.db.execute("SELECT * FROM event WHERE phase='warm' ORDER BY start").fetchall()
         self.assertEqual(len(events),2)
         self.assertEqual(events[0]['start'],'2023-02-01') # normal value 1.2 is NOT an episode
         self.assertEqual(import_noaa(self.db,path)['duplicates'],24)

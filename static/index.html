@@ -1,209 +1,50 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Chuva x Rio · Histórico do Alto Vale</title>
-    <link rel="stylesheet" href="./style.css?v=2" />
-    <script src="./app.js?v=2" defer></script>
-  </head>
-  <body>
-    <div
-      id="startup-help"
-      hidden
-      style="
-        margin: 20px;
-        padding: 24px;
-        background: #edf6ff;
-        border: 2px solid #286fba;
-        border-radius: 12px;
-        font-family:
-          Segoe UI,
-          Arial;
-        color: #16384d;
-      "
-    >
-      <h2>Abra o Chuva x Rio pelo iniciador</h2>
-      <p>
-        Este arquivo foi aberto diretamente. Para carregar os dados e filtros, o
-        servidor Python precisa estar em execução.
-      </p>
-      <p>
-        Após instalar as dependências do README, abra
-        <strong>iniciar.cmd</strong> na pasta do projeto ou execute
-        <code>python run.py</code>.
-      </p>
-      <a href="http://127.0.0.1:8000/"
-        >Abrir o sistema em http://127.0.0.1:8000/</a
-      >
-    </div>
-    <script>
-      if (location.protocol === "file:") {
-        document.getElementById("startup-help").hidden = false;
-        document.documentElement.classList.add("file-mode");
-      }
-    </script>
-    <noscript
-      ><p style="padding: 24px">
-        Ative JavaScript para usar os filtros e gráficos.
-      </p></noscript
-    >
-    <header>
-      <a class="brand" href="/" aria-label="Chuva x Rio, início"
-        ><span class="mark">≈</span> Chuva <span>×</span> Rio</a
-      ><span class="tag">PROJETO INTEGRADOR II · UDESC</span>
-    </header>
-    <main>
-      <section class="hero">
-        <p class="eyebrow">OBSERVATÓRIO HISTÓRICO / ALTO VALE DO ITAJAÍ</p>
-        <h1>Histórico da chuva.<br />Perspectiva para os rios.</h1>
-        <p>
-          Explore episódios de El Niño e compare as séries disponíveis.<br />Uma
-          leitura histórica de Ibirama e Presidente Getúlio.
-        </p>
-        <div class="hero-note">ANÁLISE HISTÓRICA · SEM PREVISÃO OU ALERTAS</div>
-        <div class="hero-stats" id="overview">
-          <span>NOAA/CPC <b>ENSO</b></span
-          ><span>NASA POWER <b>Precipitação</b></span
-          ><span>Alto Vale <b>Santa Catarina</b></span>
-        </div>
-      </section>
-      <div id="status" tabindex="-1" role="status" aria-live="polite">
-        Carregando os dados locais…
-      </div>
-      <section class="panel">
-        <div class="section-title">
-          <div>
-            <p class="eyebrow">01 / SELECIONE OS PERÍODOS</p>
-            <h2>Linha do tempo ENSO</h2>
-          </div>
-          <span class="badge">NOAA/CPC · RONI</span>
-        </div>
-        <p class="muted">
-          Escolha até três períodos. Datas representam os meses centrais das
-          temporadas marcadas como quentes pela NOAA. O período atual é uma
-          janela de consulta independente.
-        </p>
-        <div class="timeline" id="timeline"></div>
-        <details>
-          <summary>
-            Explorar outros episódios desde 1950 (inclui períodos sem dados
-            locais)
-          </summary>
-          <div id="older" class="timeline"></div>
-        </details>
-        <div id="selection-summary" class="selection-summary"></div>
-        <div class="current-window">
-          <button id="current" type="button" aria-pressed="false">
-            ＋ Período atual</button
-          ><button id="custom" type="button" aria-pressed="false">
-            ＋ Intervalo personalizado</button
-          ><label
-            >De
-            <input id="current-start" type="date" value="2026-01-01" /></label
-          ><label
-            >Até <input id="current-end" type="date" value="2026-10-21"
-          /></label>
-        </div>
-        <p class="muted">
-          As datas acima são aplicadas ao período atual ou ao intervalo
-          personalizado. Os eventos preservam o calendário NOAA.
-        </p>
-        <p class="muted" id="enso-note"></p>
-      </section>
-      <section class="panel" id="analysis">
-        <div class="section-title">
-          <div>
-            <p class="eyebrow">02 / EXPLORE E COMPARE</p>
-            <h2>Chuva e nível dos rios</h2>
-          </div>
-          <button id="download" class="secondary">
-            Baixar dados exibidos · CSV
-          </button>
-        </div>
-        <div class="filters">
-          <label>Ponto de precipitação<select id="rain"></select></label
-          ><label
-            >Estação de nível<select id="river">
-              <option value="">Sem estação importada</option>
-            </select></label
-          ><label
-            >Resolução<select id="resolution">
-              <option value="monthly">Mensal</option>
-              <option value="daily">Diária</option>
-            </select></label
-          ><label
-            >Variáveis<select id="variables">
-              <option value="rain">Precipitação</option>
-              <option value="both">Chuva e nível</option>
-              <option value="river">Nível dos rios</option>
-            </select></label
-          >
-        </div>
-        <label class="check"
-          ><input id="common" type="checkbox" checked /> Usar trecho comum entre
-          períodos</label
-        >
-        <p id="alignment" class="muted"></p>
-        <div id="metrics" class="metrics"></div>
-        <div id="charts"></div>
-        <div class="notice">
-          <strong>Como ler os dados</strong>
-          <p>
-            Zero é uma observação válida. Ausência não vira zero: curvas são
-            interrompidas e meses parciais têm cobertura indicada. Chuva mensal
-            é soma dos dias disponíveis; nível mensal é média dos dias
-            disponíveis. Os valores parciais não representam um mês completo.
-          </p>
-        </div>
-        <details>
-          <summary>Consultar valores, datas originais e cobertura</summary>
-          <div class="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Período</th>
-                  <th>Local</th>
-                  <th>Data inicial</th>
-                  <th>Data final</th>
-                  <th>Valor</th>
-                  <th>Unidade</th>
-                  <th>Dias válidos/esperados</th>
-                </tr>
-              </thead>
-              <tbody id="values"></tbody>
-            </table>
-          </div>
-        </details>
-      </section>
-      <section class="panel">
-        <p class="eyebrow">03 / TRANSPARÊNCIA</p>
-        <h2>De onde vêm os dados?</h2>
-        <div class="sources" id="sources"></div>
-        <details>
-          <summary>Histórico das últimas cargas</summary>
-          <div class="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Fonte</th>
-                  <th>Concluída em (UTC)</th>
-                  <th>Status</th>
-                  <th>Inseridos / revisados / repetidos / rejeitados</th>
-                </tr>
-              </thead>
-              <tbody id="runs"></tbody>
-            </table>
-          </div>
-        </details>
-      </section>
-    </main>
-    <footer>
-      <strong>Chuva × Rio</strong
-      ><span
-        >Breno Batista Pascoalin & Henrique Knaul · Projeto Integrador II ·
-        2026</span
-      >
-    </footer>
-  </body>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#123c49" />
+  <title>Chuva × Rio · Observatório histórico do Alto Vale</title>
+  <link rel="stylesheet" href="./style.css?v=3" />
+  <script src="./app.js?v=3" defer></script>
+</head>
+<body>
+  <a href="#app-main" class="skip-link">Pular para o conteúdo</a>
+  <div id="startup-help" class="startup-help" hidden><h1>Abra o Chuva × Rio pelo iniciador</h1><p>Para carregar os dados locais, abra <strong>iniciar.cmd</strong> na pasta do projeto ou execute <code>python run.py</code> após instalar as dependências do README.</p><a href="http://127.0.0.1:8000/">Abrir o sistema em localhost:8000 →</a></div>
+  <script>if(location.protocol==="file:"){document.getElementById("startup-help").hidden=false;document.documentElement.classList.add("file-mode");}</script>
+  <noscript><p class="startup-help">Ative o JavaScript para explorar os gráficos e filtros.</p></noscript>
+  <header class="site-header"><a class="brand" href="#overview" aria-label="Chuva x Rio, visão geral"><span class="brand-mark" aria-hidden="true">≈</span><span>Chuva <b>×</b> Rio<small>OBSERVATÓRIO HISTÓRICO</small></span></a><div class="header-context"><span class="location-dot" aria-hidden="true"></span> Alto Vale do Itajaí · SC <span class="academic">UDESC / PROJETO INTEGRADOR II</span></div></header>
+  <div class="navigation-wrap"><nav class="navigation" role="tablist" aria-label="Áreas do observatório">
+    <button id="tab-overview" role="tab" aria-selected="true" aria-controls="panel-overview" data-tab="overview"><span aria-hidden="true">01</span> Visão Geral</button>
+    <button id="tab-history" role="tab" aria-selected="false" aria-controls="panel-history" tabindex="-1" data-tab="history"><span aria-hidden="true">02</span> Análise Histórica</button>
+    <button id="tab-comparison" role="tab" aria-selected="false" aria-controls="panel-comparison" tabindex="-1" data-tab="comparison"><span aria-hidden="true">03</span> Comparação de Fenômenos</button>
+    <button id="tab-methodology" role="tab" aria-selected="false" aria-controls="panel-methodology" tabindex="-1" data-tab="methodology"><span aria-hidden="true">04</span> Dados e Metodologia</button>
+  </nav></div>
+  <main id="app-main" tabindex="-1">
+    <div id="app-status" class="status" role="status" aria-live="polite">Carregando o acervo local…</div><button id="retry" class="secondary" hidden>Tentar carregar novamente</button>
+    <section id="panel-overview" class="tab-panel" role="tabpanel" aria-labelledby="tab-overview">
+      <div class="hero"><div><p class="eyebrow">CLIMA, ÁGUA E MEMÓRIA DO TERRITÓRIO</p><h1>Entender o passado.<br><span>Observar nossos rios.</span></h1><p>Explore a chuva e o nível do rio no Alto Vale do Itajaí e compare períodos de El Niño, La Niña e neutralidade.</p><button class="primary light" data-go="history">Explorar o histórico <span aria-hidden="true">↗</span></button></div><div class="hero-aside"><div class="river-art" aria-hidden="true"><svg viewBox="0 0 340 190"><path d="M0 75Q70 5 142 74T340 65M0 99Q70 29 142 98T340 89M0 123Q70 53 142 122T340 113M0 147Q70 77 142 146T340 137" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="270" cy="27" r="15" fill="none" stroke="currentColor" stroke-width="2"/></svg></div><span class="hero-label">IBIRAMA · PRESIDENTE GETÚLIO</span><p>Dados reais. Leitura histórica.<br>Sem previsão ou emissão de alertas.</p></div></div>
+      <div id="overview-kpis" class="kpi-grid" aria-label="Resumo dos dados disponíveis"></div>
+      <div class="overview-grid"><section class="panel overview-series"><div class="section-title"><div><p class="eyebrow">UM RECORTE DO ACERVO</p><h2>Precipitação mais recente</h2></div><span class="badge" id="overview-period">NASA POWER</span></div><p class="muted" id="overview-note">Soma mensal das observações disponíveis em Ibirama.</p><div id="overview-chart" aria-busy="true"><div class="loading">Preparando o gráfico…</div></div><button class="text-button" id="open-recent">Abrir este período na análise histórica <span aria-hidden="true">→</span></button></section><aside class="overview-side"><section class="panel phase-intro"><p class="eyebrow">DO PACÍFICO AO ALTO VALE</p><h2>Três fases.<br>Muitas perguntas.</h2><div id="phase-counts" class="phase-counts"></div><p class="muted">Compare episódios e procure padrões no recorte local. Uma associação histórica não comprova causalidade.</p><button class="primary" data-go="comparison">Comparar fenômenos <span aria-hidden="true">→</span></button></section><div class="context-note"><span aria-hidden="true">ⓘ</span><p>O acervo contém <strong>intervalos descontínuos</strong>. Confira a cobertura antes de comparar valores.</p><button class="text-button" data-go="methodology">Ver fontes e lacunas →</button></div></aside></div>
+    </section>
+    <section id="panel-history" class="tab-panel" role="tabpanel" aria-labelledby="tab-history" hidden>
+      <div class="page-title"><p class="eyebrow">02 / LEITURA NO TEMPO</p><h1>Análise Histórica</h1><p>Explore um ano ou intervalo e observe os valores, as fases ENSO e a cobertura de cada série.</p></div>
+      <section class="panel filter-panel" aria-label="Filtros da análise histórica"><div class="section-title"><h2>Defina seu recorte</h2><button id="h-reset" class="text-button">Restaurar filtros</button></div><div class="filters period-filters"><label>Selecionar por<select id="h-mode"><option value="year">Ano completo</option><option value="custom">Intervalo de datas</option></select></label><label id="h-year-field">Ano<select id="h-year"></select></label><label id="h-start-field" hidden>Data inicial<input id="h-start" type="date" /></label><label id="h-end-field" hidden>Data final<input id="h-end" type="date" /></label><label>Fase climática<select id="h-phase"><option value="all">Todas as fases</option><option value="warm">El Niño</option><option value="cold">La Niña</option><option value="neutral">Neutro / sem episódio</option></select></label></div><div class="filters data-filters"><label>Ponto de precipitação<select id="h-rain"></select></label><label>Estação de nível<select id="h-river"></select></label><label>Variáveis<select id="h-variables"><option value="both">Chuva e nível</option><option value="rain">Precipitação</option><option value="river">Nível do rio</option></select></label><label>Resolução<select id="h-resolution"><option value="monthly">Mensal</option><option value="daily">Diária</option></select></label></div><p class="filter-hint">Até cinco anos por consulta. O filtro ENSO usa o mês central das temporadas NOAA; meses sem índice não são classificados como neutros.</p></section>
+      <div id="h-status" class="status" role="status" aria-live="polite"></div><div id="h-results" class="results" aria-busy="false"><div class="results-heading"><div><p class="eyebrow">RESULTADOS DO RECORTE</p><h2 id="h-heading">Histórico selecionado</h2></div><button id="h-download" class="secondary" disabled>↓ Exportar CSV</button></div><div id="h-metrics" class="metrics"></div><div id="h-charts"></div><div id="h-insights" class="insights"></div><div class="reading-note"><strong>Uma leitura cuidadosa</strong><p>Chuva mensal é a soma dos dias disponíveis; nível mensal é a média desses dias. Lacunas interrompem as linhas. Valores parciais têm marcação e não representam um mês completo. Máximos são descritivos do recorte, sem estimativa de anomalia climatológica.</p></div><details class="panel data-details"><summary>Consultar tabela de valores e cobertura <span>Datas originais, unidades e qualidade</span></summary><div class="table-scroll" tabindex="0" role="region" aria-label="Tabela da análise histórica"><table><caption class="sr-only">Valores da análise histórica</caption><thead><tr><th scope="col">Período</th><th scope="col">Local</th><th scope="col">Início</th><th scope="col">Fim</th><th scope="col">Valor</th><th scope="col">Unidade</th><th scope="col">Fase ENSO</th><th scope="col">Dias válidos / elegíveis</th><th scope="col">Situação</th></tr></thead><tbody id="h-values"></tbody></table></div></details></div>
+    </section>
+    <section id="panel-comparison" class="tab-panel" role="tabpanel" aria-labelledby="tab-comparison" hidden>
+      <div class="page-title"><p class="eyebrow">03 / DIFERENÇAS E PADRÕES</p><h1>Comparação de Fenômenos</h1><p>Coloque até três episódios, anos ou intervalos lado a lado. Observe as diferenças junto com a cobertura.</p></div>
+      <section class="panel filter-panel"><div class="section-title"><div><h2>Quais períodos você quer comparar?</h2><p class="muted">As séries são alinhadas pelo tempo decorrido desde o início de cada período.</p></div><button class="secondary" id="preset-enso">El Niño × La Niña</button></div><div id="selection-summary" class="selection-summary" aria-live="polite"></div><form id="period-form"><div class="filters period-builder"><label>Adicionar<select id="period-kind"><option value="event">Episódio ENSO</option><option value="year">Ano</option><option value="custom">Intervalo de datas</option></select></label><label id="event-phase-field">Filtrar episódios<select id="event-phase"><option value="all">Todas as fases</option><option value="warm">El Niño</option><option value="cold">La Niña</option><option value="neutral">Neutro / sem episódio</option></select></label><label id="event-select-field" class="wide">Episódio<select id="event-select"></select></label><label id="compare-year-field" hidden>Ano<select id="compare-year"></select></label><label id="compare-start-field" hidden>Data inicial<input id="current-start" type="date" /></label><label id="compare-end-field" hidden>Data final<input id="current-end" type="date" /></label><button id="add-period" type="submit" class="primary">+ Adicionar</button></div></form><div class="filters data-filters"><label>Ponto de precipitação<select id="rain"></select></label><label>Estação de nível<select id="river"></select></label><label>Variáveis<select id="variables"><option value="rain">Precipitação</option><option value="both">Chuva e nível</option><option value="river">Nível do rio</option></select></label><label>Resolução<select id="resolution"><option value="monthly">Mensal</option><option value="daily">Diária</option></select></label></div><label class="check"><input id="common" type="checkbox" checked /> Comparar o mesmo número de meses ou dias a partir do início</label><p class="filter-hint">O trecho comum iguala a duração, mas não preenche lacunas nem iguala a cobertura. Compare acumulados apenas considerando os dias válidos.</p></section>
+      <div id="status" class="status" role="status" aria-live="polite"></div><div id="comparison-results" class="results" aria-busy="false"><div class="results-heading"><div><p class="eyebrow">SÉRIES LADO A LADO</p><h2>Um eixo, diferentes histórias</h2></div><button id="download" class="secondary" disabled>↓ Exportar CSV</button></div><p id="alignment" class="muted"></p><div id="metrics" class="metrics"></div><div id="charts"></div><div id="insights" class="insights"></div><div class="reading-note"><strong>Associação não é causalidade</strong><p>As diferenças entre períodos também refletem sazonalidade, duração, disponibilidade de dados e outros fatores. Os gráficos compartilham a escala por variável; chuva (mm) e nível (m) ficam em gráficos separados. Totais parciais exigem cautela.</p></div><details class="panel data-details"><summary>Consultar tabela da comparação <span>Valores exportáveis em CSV</span></summary><div class="table-scroll" tabindex="0" role="region" aria-label="Tabela da comparação"><table><caption class="sr-only">Valores da comparação</caption><thead><tr><th scope="col">Período</th><th scope="col">Local</th><th scope="col">Início</th><th scope="col">Fim</th><th scope="col">Valor</th><th scope="col">Unidade</th><th scope="col">Fase ENSO</th><th scope="col">Dias válidos / elegíveis</th><th scope="col">Situação</th></tr></thead><tbody id="values"></tbody></table></div></details></div>
+    </section>
+    <section id="panel-methodology" class="tab-panel" role="tabpanel" aria-labelledby="tab-methodology" hidden>
+      <div class="page-title"><p class="eyebrow">04 / TRANSPARÊNCIA E CONTEXTO</p><h1>Dados e Metodologia</h1><p>Conheça as fontes, os critérios e os limites desta leitura histórica.</p></div><div class="sources" id="sources"></div>
+      <section class="panel"><div class="section-title"><div><p class="eyebrow">O QUE ESTÁ NO ACERVO</p><h2>Cobertura dos dados locais</h2></div><span class="badge">Medições reais</span></div><p class="muted">A primeira e a última data delimitam o acervo; não garantem uma série contínua. Os gráficos e a tabela mostram a cobertura do intervalo consultado.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Cobertura por ponto de observação"><table><thead><tr><th scope="col">Local / produto</th><th scope="col">Primeira observação</th><th scope="col">Última observação</th><th scope="col">Registros diários</th></tr></thead><tbody id="coverage"></tbody></table></div></section>
+      <div class="method-grid"><section class="panel"><p class="eyebrow">CLASSIFICAÇÃO ENSO</p><h2>Como identificamos as fases?</h2><p>Utilizamos a tabela oficial <strong>RONI, ERSSTv6, da NOAA/CPC</strong>, que classifica temporadas de três meses. Os episódios quentes e frios seguem as marcações oficiais de persistência: pelo menos cinco temporadas consecutivas com RONI ≥ +0,5 °C ou ≤ −0,5 °C, respectivamente.</p><div class="phase-key"><span class="phase-pill warm">El Niño / quente</span><span class="phase-pill cold">La Niña / frio</span><span class="phase-pill neutral">Neutro / sem episódio</span></div><p>As datas usam o <strong>mês central</strong> de cada temporada. A classe neutra corresponde aos meses não marcados como episódio confirmado na tabela, inclusive valores fora dos limiares sem persistência suficiente. Mês sem índice permanece <strong>não classificado</strong>.</p><p class="muted" id="enso-note"></p><a class="source-link" href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/" target="_blank" rel="noreferrer">Ver a classificação NOAA ↗</a></section><section class="panel"><p class="eyebrow">COMO LER O RESULTADO</p><h2>Limitações que fazem parte da análise</h2><ul class="method-list"><li><strong>Ausência não é zero.</strong> Não há interpolação nem geração de medições. Zero de chuva continua sendo uma observação válida.</li><li><strong>Resoluções diferentes.</strong> Chuva em grade não é um pluviômetro. O nível representa uma estação física e seu referencial de escala.</li><li><strong>Máximos do recorte.</strong> Os destaques não são alertas, níveis de inundação ou anomalias frente a uma normal climatológica.</li><li><strong>Comparação descritiva.</strong> Não estimamos causalidade, significância estatística ou previsões. Uma relação temporal não isola outros fatores.</li><li><strong>Consulta local.</strong> O aplicativo usa um acervo persistido. Não é um painel em tempo real e não depende de internet durante a apresentação.</li></ul></section></div>
+      <details class="panel data-details"><summary>Histórico das cargas de dados <span>Proveniência e rastreabilidade</span></summary><div class="table-scroll" tabindex="0" role="region" aria-label="Histórico de importações"><table><thead><tr><th scope="col">Fonte</th><th scope="col">Conclusão (Brasília)</th><th scope="col">Status</th><th scope="col">Inseridos / revisados / repetidos / rejeitados</th></tr></thead><tbody id="runs"></tbody></table></div></details>
+    </section>
+  </main>
+  <footer><div><strong>Chuva × Rio</strong><span>Projeto Integrador II · UDESC</span></div><p>Breno Batista Pascoalin &amp; Henrique Knaul · 2026</p><span class="footer-note">Análise histórica · Alto Vale do Itajaí</span></footer>
+</body>
 </html>
+

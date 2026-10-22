@@ -1,48 +1,38 @@
-# Entrega e validação
+# Entrega e validação do MVP
 
-Base examinada: branch `main`, commit `dbcaba4`. Havia apenas README e PDF; os diretórios de código mencionados no README não existiam. Mantidos o escopo, autores, fontes e documento de especificação. Implementação em Python/FastAPI conforme proposta da seção 28.1; SQLite substitui PostgreSQL para execução local. Não há código Java existente a migrar. A revisão atual parte da implementação local `e066dcf`, preservando seus dados e adaptadores.
+Revisão de 22/10/2026 sobre a aplicação existente em Python/FastAPI, SQLite e JavaScript sem framework. A base original, os adaptadores NOAA/NASA/ANA e o iniciador local foram preservados. O escopo é uma demonstração acadêmica de análise histórica do Alto Vale do Itajaí.
 
-| Requisitos | Situação nesta entrega |
-|---|---|
-| RF01 | Coletor NASA real, com arquivos brutos e normalização diária |
-| RF02 | Adaptador XML público ANA/SNIRH e importador CSV; série real da estação 83440000 Ibirama incluída |
-| RF03, RF06, RF09 | Índices e calendário RONI importados da marcação da NOAA; linha do tempo selecionável |
-| RF04, RF05 | SQLite persistente, FKs, chave única, revisão e procedência |
-| RF07 | Gráfico diário e mensal de chuva real |
-| RF08, RF12 | Gráfico e comparação de nível real de Ibirama em 1997–1998 e 2014–2016, com lacunas explícitas |
-| RF10, RF11, RF14 | Até três períodos, intervalo personalizado, mesma variável e estação, alinhamento relativo e trecho comum opcional |
-| RF13 | Janela atual independente, corte por último dado válido; sem extrapolação |
-| RF15 | Comando `refresh`, carga incremental com sobreposição, duas tentativas e serialização no banco; agendamento do sistema operacional não instalado |
-| RF16–RF18 | Fontes, coordenadas, unidades, coleta, cobertura, lacunas e exportação |
+## Implementação
 
-## Correções de abertura e interface
+- Quatro áreas: Visão Geral, Análise Histórica, Comparação de Fenômenos e Dados e Metodologia.
+- Histórico por ano ou intervalo de até cinco anos, fase ENSO, ponto de precipitação, variável e resolução diária/mensal.
+- Comparação de até três episódios, anos ou intervalos, com duração comum opcional, cobertura e médias diárias descritivas.
+- Classificação de El Niño, La Niña e neutralidade a partir das marcações oficiais da tabela RONI ERSSTv6 NOAA/CPC, preservando os meses sem classificação.
+- Séries reais, lacunas explícitas, tabela acessível e CSV com procedência, unidades e classificação.
+- Gráficos separados para chuva (mm) e nível (m), leitura por cursor/teclado, estados de consulta e erro, navegação responsiva.
 
-O problema de abertura foi reproduzido a partir do endereço informado pelo usuário: `file:///.../static/index.html`. A versão anterior usava caminhos absolutos `/static/...`, que não localizavam os arquivos nessa abertura, e o HTML não iniciava a API Python. Esta revisão usa caminhos relativos para os recursos e exibe instruções claras em `file://`, sem fingir que a API está ativa.
+## Dados preservados
 
-`python run.py` carrega o snapshot somente em banco vazio, inicia FastAPI e abre o navegador no endereço HTTP correto. `iniciar.cmd` facilita essa execução no Windows após a instalação. Acesso legado a `/static/index.html` pelo servidor redireciona para a aplicação. O dashboard organiza filtros, eventos com dados locais, seleção dos períodos, gráficos e fontes. A captura está em `docs/screenshots/dashboard.png`.
+São **5.852 medições reais**, das quais **4.538 de precipitação NASA POWER** em dois pontos e **1.314 médias diárias de nível ANA/SNIRH** da estação 83440000 em Ibirama. Nenhuma medição foi gerada para ampliar a cobertura.
 
-## Verificação
+Os **920 índices mensais centrais** do snapshot NOAA vão de janeiro/1950 a agosto/2026. A mesma tabela agora origina **94 janelas contíguas**: 25 de El Niño, 22 de La Niña e 47 neutras/sem episódio confirmado. “Neutro” reproduz a ausência de marcação de episódio na fonte, inclusive valores que ainda não satisfazem a persistência; meses sem índice ficam não classificados.
 
-Validação executada em 21/10/2026:
+A última chuva válida é de 18/10/2026. Não há nível de rio para 2023–2024 ou 2026 na demonstração. A extensão temporal entre o primeiro e o último registro não representa cobertura contínua. Consulte [dados e procedência](../data/README.md).
 
-- **16 testes Python aprovados**: API/recursos estáticos, zero e lacunas, soma/média/unidades, qualidade ANA, revisão/deduplicação, rollback, backup, integridade referencial, meses incompletos, corte atual e preservação do histórico diante de resposta NOAA truncada.
-- **Chromium executou a aplicação completa** com banco SQLite novo: restauração automática de 5.852 medições (4.538 de chuva e 1.314 de nível) e 25 episódios. O catálogo permaneceu idêntico após encerrar e reiniciar o servidor.
-- Navegação com cliques reais: CSS, gráficos/legendas, município, seleção de eventos, diária/mensal, trecho comum/completo, período atual com último dado de chuva em 18/10/2026, ANA real em metros, intervalo personalizado, mensagens de ausência e recarregamento da página.
-- CSV baixado e conferido quanto a fonte, unidade e número de linhas; testes em larguras 1366, 768 e 360 sem transbordamento horizontal da página. Zero erros JavaScript ou falhas de recursos na navegação. Requisições HTTPS externas bloqueadas durante o ensaio para validar operação offline.
-- Abertura por `file://` verificada: CSS local carregado e orientação para iniciar o servidor, em vez de filtros inoperantes.
-- Capturas da interface inspecionadas visualmente. Arquivos finais em `docs/screenshots/`. Todos os hashes SHA-256 dos artefatos do snapshot conferidos; `PRAGMA integrity_check` e `foreign_key_check` aprovados.
+## Verificação executada em 22/10/2026
 
-Os comandos reproduzíveis estão no README; `tests/browser.cjs` inicia e encerra um servidor temporário e usa uma base descartável, sem alterar o banco da apresentação.
+- **21 testes Python de dados aprovados**: seis de ENSO, onze de séries/importação e quatro regressões. Abrangem fases oficiais, migração/idempotência, filtros, lacunas/zero, agregação, unidades, consistência ANA, rollback, deduplicação, intervalos e cobertura. Os dois testes com `TestClient` não concluíram neste ambiente por bloqueio de comunicação local; não são contabilizados como aprovados.
+- **API HTTP real validada** com servidor local e banco temporário: restauração das 5.852 medições e 94 janelas; 1998 contém 365 dias de chuva, particionados em 120 quentes, 214 frios e 31 neutros. Filtros mantêm valores excluídos ausentes, rio em 2023 sem valores, La Niña em 2015 sem dias elegíveis, setembro/outubro de 2026 sem índice não entram como neutros; intervalo invertido retorna 422.
+- **Integridade e rastreabilidade verificadas**: igualdade exata das 5.852 medições e registros de ingestão com a base anterior, preservação dos valores/datas/IDs de carga dos 920 índices, 21 hashes de artefatos brutos corretos, `integrity_check` e `foreign_key_check` aprovados.
+- O ensaio completo do navegador está sendo concluído; os resultados finais serão registrados nesta seção somente após execução.
 
-Os testes locais não substituem homologação em Chrome e Firefox estáveis, nem os ensaios com 1 milhão de medições e 10 usuários da especificação. Nenhuma meta de latência de produção é afirmada.
+`tests/browser.cjs` usa um banco descartável e uma porta local disponível. Inicia/encerra o servidor, impede tráfego externo e grava capturas em `output/screenshots/`. Não altera o banco usado na apresentação. As instruções reproduzíveis estão no [README](../README.md).
 
-## Pendências e diferenças do projeto completo
+## Limitações
 
-1. **Ampliar a cobertura de nível:** a estação Ibirama já tem série real importada pelo serviço público ANA, porém faltam dados para 2023–2024 e para o período atual na base da demonstração. Confirmar disponibilidade/revisões na origem e documentar o referencial altimétrico, ainda desconhecido. Não assumir que lacunas são nível zero.
-2. Migrar para PostgreSQL e implementar o esquema físico completo da seção 29, com papéis distintos para consulta/coleta. SQLite reúne as duas variáveis em uma tabela, identificadas pelo tipo da estação; não reproduz exatamente as sete entidades propostas.
-3. Instalar o agendamento, testar concorrência operacional e recuperação de falhas abruptas, monitorar cargas e rotacionar backups. `refresh` faz backup; cargas avulsas exigem `backup` explícito. O timeout e duas tentativas são limitados, sem backoff sofisticado.
-4. Expandir cobertura histórica, validar chuva com INMET/MERGE e validar representatividade espacial dos pontos em grade. A timeline contém eventos sem dados locais; isso está informado.
-5. Evoluir auditoria para relatórios completos de rejeições por linha e versionamento automático do formato NOAA; reter versões anteriores já é possível pelos artefatos e registros de carga. Uma mudança nas classes da tabela faz a carga falhar, preservando o histórico.
-6. Homologação Chrome/Firefox, acessibilidade assistiva, impressão monocromática e ensaios de desempenho/recuperação conforme RNF. A aplicação local não é um serviço público endurecido para produção; publicação exige configuração de servidor, HTTPS e revisão operacional.
-
-Os gráficos de nível usam uma estação selecionada por consulta; não há sobreposição de cotas de estações distintas. Na API, duas estações produzem séries separadas e a interface as agrupa por estação. A comparação atual conjunta sem uma das variáveis informa que não existe corte comum e permite consultar a variável disponível isoladamente. Para comparação mensal de múltiplas janelas com trecho comum, os inícios devem ser no primeiro dia do mês; na resolução diária, podem ser quaisquer datas válidas. Isso evita alinhar pedaços incompatíveis de meses como se fossem meses completos.
+1. As janelas de precipitação e nível são descontínuas. Ampliar cobertura exige novas cargas das fontes; a interface não interpola nem substitui ausência por zero.
+2. NASA POWER é produto em grade, não pluviômetro físico. Pontos próximos podem compartilhar a mesma célula. O nível ANA é uma cota local, sem referencial altimétrico conhecido nesta base.
+3. As datas ENSO são meses centrais de temporadas móveis de três meses, não datas físicas diárias de início/fim. A análise é descritiva; diferenças não comprovam causalidade, anomalia climatológica ou significância estatística.
+4. O acervo local não é monitoramento em tempo real, previsão ou alerta. O comando de atualização continua disponível, mas não foi instalado agendamento do sistema operacional.
+5. Não foram executados ensaios de produção com um milhão de medições/dez usuários, homologação em Firefox, leitor de tela ou recuperação de falha abrupta. Não se afirma meta de latência de produção.
+6. SQLite atende a execução local. Migração para PostgreSQL, papéis de acesso e infraestrutura pública permanecem fora do escopo deste MVP.

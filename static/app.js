@@ -1,363 +1,52 @@
 "use strict";
-const $ = (id) => document.getElementById(id);
-const colors = ["#087f79", "#2865c5", "#a46021"];
-const selected = new Set();
-let catalog,
-  displayed = [],
-  generation = 0;
-const fmt = (n) =>
-  n == null
-    ? "Sem dado"
-    : n.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
-const collected = (s) =>
-  s
-    ? new Date(s).toLocaleString("pt-BR", {
-        dateStyle: "short",
-        timeStyle: "short",
-        timeZone: "America/Sao_Paulo",
-      }) + " (Brasília)"
-    : "indisponível";
-const esc = (s) =>
-  String(s ?? "").replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        c
-      ],
-  );
-async function api(url) {
-  const r = await fetch(url);
-  if (!(r.headers.get("content-type") || "").includes("application/json"))
-    throw new Error(
-      "API indisponível. Inicie com python run.py e abra http://127.0.0.1:8000/.",
-    );
-  const body = await r.json();
-  if (!r.ok)
-    throw new Error(
-      typeof body.detail === "string"
-        ? body.detail
-        : "Revise os filtros e as datas.",
-    );
-  return body;
-}
-function status(message, error = false) {
-  $("status").textContent = message;
-  $("status").className = error ? "error" : "";
-}
-function toggle(id) {
-  if (selected.has(id)) selected.delete(id);
-  else if (selected.size < 3) selected.add(id);
-  else {
-    status(
-      "Selecione no máximo três períodos. Remova um antes de adicionar outro.",
-      true,
-    );
-    return;
-  }
-  document
-    .querySelectorAll("[data-event]")
-    .forEach((b) =>
-      b.setAttribute("aria-pressed", selected.has(b.dataset.event)),
-    );
-  $("current").setAttribute("aria-pressed", selected.has("current"));
-  $("custom").setAttribute("aria-pressed", selected.has("custom"));
-  refresh();
-}
-function eventButton(e) {
-  const b = document.createElement("button");
-  b.dataset.event = e.id;
-  b.setAttribute("aria-pressed", selected.has(e.id));
-  b.innerHTML = `${esc(e.start.slice(0, 4))} — ${esc(e.end.slice(0, 4))}<span>${esc(e.start.slice(5, 7))}/${e.start.slice(0, 4)} a ${e.end.slice(5, 7)}/${e.end.slice(0, 4)}</span><span>${e.samples ? "Série local disponível" : "Sem série local carregada"}</span>`;
-  b.onclick = () => toggle(e.id);
-  return b;
-}
-async function init() {
-  try {
-    catalog = await api("./api/catalog");
-    $("overview").innerHTML =
-      `<span>Calendário NOAA <b>${catalog.events.length} episódios</b></span><span>Precipitação real <b>${fmt(catalog.stations.filter((s) => s.kind === "grid").reduce((n, s) => n + s.samples, 0))} medições</b></span><span>Nível real · ANA <b>${fmt(catalog.stations.filter((s) => s.kind === "river").reduce((n, s) => n + s.samples, 0))} medições</b></span>`;
-    const available = catalog.events.filter((e) => e.samples);
-    available.slice(-2).forEach((e) => selected.add(e.id));
-    if (!selected.size && catalog.events.length)
-      selected.add(catalog.events.at(-1).id);
-    catalog.events.forEach((e) =>
-      $(e.samples ? "timeline" : "older").append(eventButton(e)),
-    );
-    const active = $("timeline").querySelector("[aria-pressed=true]");
-    if (active)
-      $("timeline").scrollLeft = active.offsetLeft - $("timeline").offsetLeft;
-    if (!catalog.events.length)
-      $("timeline").textContent =
-        "Calendário indisponível. Execute a carga NOAA.";
-    catalog.stations
-      .filter((s) => s.kind === "grid")
-      .forEach((s) => $("rain").add(new Option(s.name, s.id)));
-    const rivers = catalog.stations.filter((s) => s.kind === "river");
-    if (rivers.length) {
-      $("river").innerHTML = "";
-      rivers.forEach((s) => $("river").add(new Option(s.name, s.id)));
-    }
-    const last = catalog.indices.at(-1);
-    $("enso-note").textContent = last
-      ? `Última temporada disponível: mês central ${last.date.slice(0, 7)} · RONI ${fmt(last.value)} °C. Fonte: ERSSTv6. Não inferimos novos episódios a partir do valor do índice.`
-      : "Índices ENSO ainda não carregados.";
-    $("sources").innerHTML =
-      `<article><h3>01 · Referência climática</h3><p>NOAA/CPC · RONI ERSSTv6. Os episódios reproduzem as marcações da tabela oficial; início e fim usam os meses centrais das temporadas.</p><a href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/" target="_blank" rel="noreferrer">Consultar NOAA ↗</a></article><article><h3>02 · Precipitação</h3><p>NASA POWER · PRECTOTCORR. Produto em grade, consultado em coordenadas aproximadas das sedes municipais; não é estação física. Datas civis em LST. Pontos próximos podem compartilhar a mesma célula.</p><a href="https://power.larc.nasa.gov/docs/services/api/temporal/daily/" target="_blank" rel="noreferrer">Consultar NASA POWER ↗</a></article><article><h3>03 · Nível dos rios</h3><p>ANA/SNIRH · estação 83440000, Ibirama, rio Itajaí do Norte / Hercílio. Médias diárias consistidas, de escala (status real), convertidas de cm para m. Cobertura em 1997–1998 e 2014–2016; sem série importada em 2023–2024 ou 2026. ${rivers.length ? "Referencial altimétrico não informado; as cotas não são altitude absoluta." : "Nenhuma série de rio validada foi carregada. Não são geradas medições para preencher essa ausência."}</p><a href="https://www.snirh.gov.br/hidroweb/" target="_blank" rel="noreferrer">Consultar HidroWeb ↗</a></article>`;
-    $("runs").innerHTML = catalog.runs
-      .map(
-        (r) =>
-          `<tr><td>${esc(r.source_id)}</td><td>${esc(r.finished)}</td><td title="${esc(r.message)}">${esc(r.status)}</td><td>${r.inserted} / ${r.updated} / ${r.duplicates} / ${r.rejected}</td></tr>`,
-      )
-      .join("");
-    const now = new Date();
-    const local = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-    $("current-start").value = `${now.getFullYear()}-01-01`;
-    $("current-end").value = local;
-    $("current-end").max = local;
-    await refresh();
-  } catch (e) {
-    status("Não foi possível carregar a aplicação: " + e.message, true);
-  }
-}
-async function refresh() {
-  renderSelection();
-  const request = ++generation;
-  displayed = [];
-  $("charts").innerHTML = "";
-  $("values").innerHTML = "";
-  $("metrics").innerHTML = "";
-  $("alignment").textContent = "";
-  $("download").disabled = true;
-  if (!selected.size) {
-    status(
-      "Selecione um período para visualizar ou dois a três para comparar.",
-    );
-    return;
-  }
-  const mode = $("variables").value;
-  const stations = [];
-  if (mode !== "river") stations.push($("rain").value);
-  if (mode !== "rain" && $("river").value) stations.push($("river").value);
-  if (mode === "river" && !$("river").value) {
-    $("charts").innerHTML =
-      '<div class="empty">Nível indisponível: importe uma série de rio com origem e estação documentadas.</div>';
-    status("Nenhuma medição de rio carregada.");
-    return;
-  }
-  status("Consultando as séries persistidas…");
-  try {
-    const params = new URLSearchParams({
-      events: [...selected].join(","),
-      stations: stations.join(","),
-      resolution: $("resolution").value,
-      common: $("common").checked,
-      current_start: $("current-start").value,
-      current_end: $("current-end").value,
-    });
-    const result = await api("./api/compare?" + params);
-    if (request !== generation) return;
-    displayed = result.series;
-    const daily = $("resolution").value === "daily";
-    $("alignment").textContent =
-      `${selected.size === 1 ? "Visualização individual. Selecione outro período para comparar." : "Comparação por " + (daily ? "dia" : "mês") + " relativo ao início de cada período."} ${$("common").checked ? "Trecho comum ativado." : "Comprimentos originais preservados."} Datas originais na tabela e nos pontos. ${
-        result.cutoffs && Object.keys(result.cutoffs).length
-          ? "Último dado atual por série: " +
-            Object.entries(result.cutoffs)
-              .map(([s, d]) => s + ": " + (d || "indisponível"))
-              .join(" · ")
-          : ""
-      }`;
-    if (result.reason)
-      $("charts").innerHTML = `<div class="empty">${esc(result.reason)}</div>`;
-    if (mode === "both" && !$("river").value)
-      $("charts").innerHTML +=
-        '<div class="notice">Nível de rio indisponível. Exibindo somente precipitação; não há corte conjunto chuva/nível.</div>';
-    for (const s of displayed) {
-      const total = s.points
-        .filter((p) => p.value != null)
-        .reduce((a, p) => a + p.value, 0);
-      const metric =
-        s.station.kind === "grid"
-          ? s.valid
-            ? fmt(total) + " mm"
-            : "Sem dados"
-          : `${s.coverage}%`;
-      $("metrics").innerHTML +=
-        `<article class="metric" style="border-color:${colors[[...selected].indexOf(s.window_id) % colors.length]}">${esc(s.label)} · ${esc(s.station.name)}<strong>${metric}</strong><p>${s.station.kind === "grid" ? "Acumulado no trecho exibido" : "Cobertura do nível"}</p><p>${s.valid}/${s.expected} dias válidos · ${s.missing} ausentes</p><p>${s.coverage}% de cobertura · ${esc(s.start)} a ${esc(s.end)}</p><p>Último dado: ${esc(s.last_valid || "indisponível")}</p></article>`;
-    }
-    for (const station of stations) {
-      const ss = displayed.filter((s) => s.station.id === station);
-      if (ss.length) draw(ss, daily);
-    }
-    $("values").innerHTML = displayed
-      .flatMap((s) =>
-        s.points.map(
-          (p) =>
-            `<tr><td>${esc(s.label)}</td><td>${esc(s.station.name)}</td><td>${p.date}</td><td>${p.end}</td><td>${fmt(p.value)}${p.partial ? " (parcial)" : ""}</td><td>${s.unit}</td><td>${p.valid}/${p.expected}</td></tr>`,
-        ),
-      )
-      .join("");
-    $("download").disabled = !displayed.length;
-    status("");
-  } catch (e) {
-    if (request === generation) status(e.message, true);
-  }
-}
-function draw(ss, daily) {
-  const s = ss[0],
-    rain = s.station.kind === "grid";
-  const values = ss
-    .flatMap((x) => x.points.map((p) => p.value))
-    .filter((v) => v != null);
-  const box = document.createElement("div");
-  box.className = "chart";
-  box.innerHTML = `<h3>${rain ? "Precipitação" : "Nível do rio"} · ${rain ? (daily ? "diária" : "acumulado mensal") : daily ? "média diária" : "média mensal"} (${s.unit})</h3><p class="muted">${esc(s.station.name)} · ${s.station.latitude}, ${s.station.longitude} · ${esc(s.station.source_name)}${rain ? " · ponto em grade" : " · referencial: " + esc(s.station.datum || "não informado")}</p>`;
-  if (!values.length) {
-    box.innerHTML +=
-      '<div class="empty">Sem medições neste intervalo. A ausência de dados não significa ausência de chuva ou nível zero.</div>';
-    $("charts").append(box);
-    return;
-  }
-  const W = 1000,
-    H = 310,
-    L = 62,
-    R = 20,
-    T = 20,
-    B = 48,
-    n = Math.max(...ss.map((s) => s.points.length));
-  let lo = Math.min(0, ...values),
-    hi = Math.max(...values);
-  if (hi === lo) hi = lo + 1;
-  hi += (hi - lo) * 0.1;
-  const x = (i) => L + ((i + 0.5) * (W - L - R)) / n,
-    y = (v) => H - B - ((v - lo) / (hi - lo)) * (H - T - B);
-  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${rain ? "Precipitação" : "Nível"} por ${daily ? "dia" : "mês"} relativo. Valores completos disponíveis na tabela abaixo.">`;
-  for (let k = 0; k < 5; k++) {
-    const v = lo + ((hi - lo) * k) / 4;
-    svg += `<line x1="${L}" y1="${y(v)}" x2="${W - R}" y2="${y(v)}" stroke="#e1e9eb"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="12" fill="#536e79">${fmt(v)}</text>`;
-  }
-  const step = Math.max(1, Math.ceil(n / 12));
-  for (let i = 0; i < n; i += step)
-    svg += `<text x="${x(i)}" y="${H - 27}" text-anchor="middle" font-size="12" fill="#536e79">${i + 1}</text>`;
-  svg += `<text x="${W / 2}" y="${H - 5}" text-anchor="middle" font-size="12" fill="#536e79">${daily ? "Dia" : "Mês"} relativo ao início do período</text>`;
-  ss.forEach((series, j) => {
-    const color = colors[j % 3];
-    let previous = null;
-    series.points.forEach((p, i) => {
-      if (p.value == null) {
-        previous = null;
-        return;
-      }
-      const tip = esc(
-        `${series.label} | ${p.date} a ${p.end} | ${fmt(p.value)} ${series.unit} | ${p.valid}/${p.expected} dias${p.partial ? " · PARCIAL" : ""}`,
-      );
-      if (rain && !daily) {
-        const bw = Math.max(1, (W - L - R) / n / (ss.length + 1));
-        svg += `<rect x="${x(i) + (j - ss.length / 2) * bw}" y="${y(p.value)}" width="${bw * 0.85}" height="${Math.max(1, y(0) - y(p.value))}" fill="${color}" opacity="${p.partial ? 0.45 : 0.85}"><title>${tip}</title></rect>`;
-      } else {
-        if (previous && !p.partial && !previous.p.partial)
-          svg += `<line x1="${x(previous.i)}" y1="${y(previous.p.value)}" x2="${x(i)}" y2="${y(p.value)}" stroke="${color}" stroke-width="2" stroke-dasharray="${j === 1 ? "7 4" : j === 2 ? "2 4" : ""}"/>`;
-        svg += `<circle cx="${x(i)}" cy="${y(p.value)}" r="${n > 100 ? 2 : 4}" fill="${p.partial ? "white" : color}" stroke="${color}"><title>${tip}</title></circle>`;
-        previous = { p, i };
-      }
-    });
-  });
-  svg += "</svg>";
-  box.innerHTML +=
-    '<div class="plot-scroll">' +
-    svg +
-    '</div><p class="mobile-hint muted">Deslize o gráfico para ver todo o período.</p>';
-  box.innerHTML += `<div class="legend">${ss.map((s, j) => `<span><i class="swatch" style="background:${colors[j % 3]}"></i>${j + 1}. ${esc(s.label)}</span>`).join("")}</div><p class="muted">${ss.map((s) => `${esc(s.label)}: ${esc(s.start)} a ${esc(s.end)} · coleta ${esc(collected(s.collected_at))}`).join("<br>")}</p>`;
-  $("charts").append(box);
-}
-$("download").onclick = () => {
-  const cells = (v) => {
-    let value = String(v ?? "");
-    if (typeof v === "string" && /^[=+@\-\t\r]/.test(value))
-      value = "'" + value;
-    return '"' + value.replaceAll('"', '""') + '"';
-  };
-  const rows = [
-    [
-      "periodo",
-      "estacao",
-      "fonte",
-      "latitude",
-      "longitude",
-      "inicio",
-      "fim",
-      "valor",
-      "unidade",
-      "dias_validos",
-      "dias_esperados",
-      "periodo_parcial",
-      "coletado_em",
-    ],
-  ];
-  displayed.forEach((s) =>
-    s.points.forEach((p) =>
-      rows.push([
-        s.label,
-        s.station.name,
-        s.station.source_name,
-        s.station.latitude,
-        s.station.longitude,
-        p.date,
-        p.end,
-        p.value,
-        s.unit,
-        p.valid,
-        p.expected,
-        p.partial ? "sim" : "não",
-        s.collected_at,
-      ]),
-    ),
-  );
-  const url = URL.createObjectURL(
-    new Blob(
-      ["\ufeff" + rows.map((r) => r.map(cells).join(";")).join("\r\n")],
-      { type: "text/csv;charset=utf-8" },
-    ),
-  );
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "chuva-x-rio-comparacao.csv";
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-};
-$("current").onclick = () => toggle("current");
-$("custom").onclick = () => toggle("custom");
-[
-  "rain",
-  "river",
-  "resolution",
-  "variables",
-  "common",
-  "current-start",
-  "current-end",
-].forEach((id) => $(id).addEventListener("change", refresh));
-if (location.protocol !== "file:") init();
-else {
-  status("Execute iniciar.cmd ou python run.py para acessar os dados.");
-  document
-    .querySelectorAll("main button,main select,main input")
-    .forEach((el) => (el.disabled = true));
-}
+const $ = id => document.getElementById(id);
+const fmt = n => n == null || !Number.isFinite(Number(n)) ? "Sem dado" : Number(n).toLocaleString("pt-BR", {maximumFractionDigits:2});
+const esc = s => String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const phases = {warm:"El Niño",cold:"La Niña",neutral:"Neutro / sem episódio"};
+const palette = ["#087c76","#376bb0","#a9662d"];
+const phaseColors = {warm:"#ae602d",cold:"#326db6",neutral:"#5b8070"};
+const monthNames = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+const dateLabel = s => s ? s.slice(8,10)+"/"+s.slice(5,7)+"/"+s.slice(0,4) : "Indisponível";
+const monthLabel = s => s ? monthNames[Number(s.slice(5,7))-1]+"/"+s.slice(2,4) : "";
+const collected = s => s ? new Date(s).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short",timeZone:"America/Sao_Paulo"}) : "Indisponível";
+const today = new Intl.DateTimeFormat("en-CA",{timeZone:"America/Sao_Paulo",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+const currentYear = Number(today.slice(0,4));
+let catalog, activeTab="overview", recentWindow=null, historyLoaded=false, comparisonLoaded=false;
+let selected=[], displayed={history:[],comparison:[]}, requestIds={history:0,comparison:0}, controllers={};
+function setStatus(id,message,error=false,loading=false){$(id).textContent=message;$(id).className="status"+(error?" error":"")+(loading?" loading-state":"");}
+async function api(url,signal){const response=await fetch(url,{signal});if(!(response.headers.get("content-type")||"").includes("application/json"))throw new Error("API indisponível. Abra iniciar.cmd ou execute python run.py para acessar os dados locais.");const data=await response.json();if(!response.ok)throw new Error(typeof data.detail==="string"?data.detail:"Não foi possível consultar os dados. Revise os filtros e tente novamente.");return data;}
+function phasePill(phase){return `<span class="phase-pill ${esc(phase||"unknown")}">${esc(phases[phase]||"Não classificado")}</span>`;}
+function phaseOf(e){return e.phase||null;}
+function navigate(name,focus=false){if(!["overview","history","comparison","methodology"].includes(name))name="overview";activeTab=name;document.querySelectorAll("[data-tab]").forEach(b=>{const chosen=b.dataset.tab===name;b.setAttribute("aria-selected",chosen);b.tabIndex=chosen?0:-1;$("panel-"+b.dataset.tab).hidden=!chosen;});if(location.hash!=="#"+name)history.replaceState(null,"","#"+name);if(focus)$("tab-"+name).focus();if(catalog&&name==="history"&&!historyLoaded){historyLoaded=true;refreshHistory();}if(catalog&&name==="comparison"&&!comparisonLoaded){comparisonLoaded=true;refreshComparison();}}
+function bindNavigation(){const tabs=[...document.querySelectorAll("[data-tab]")];tabs.forEach((b,i)=>{b.onclick=()=>navigate(b.dataset.tab);b.onkeydown=e=>{let target;if(e.key==="ArrowRight")target=(i+1)%tabs.length;if(e.key==="ArrowLeft")target=(i+tabs.length-1)%tabs.length;if(e.key==="Home")target=0;if(e.key==="End")target=tabs.length-1;if(target!==undefined){e.preventDefault();navigate(tabs[target].dataset.tab,true);}};});document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{navigate(b.dataset.go);$("app-main").scrollIntoView({block:"start"});});window.addEventListener("hashchange",()=>navigate(location.hash.slice(1)));}
+function fillSelect(id,stations){$(id).replaceChildren();if(!stations.length)$(id).add(new Option("Nenhuma série importada",""));stations.forEach(s=>$(id).add(new Option(s.name,s.id)));}
+function rangeForYear(year){return {start:year+"-01-01",end:year===String(currentYear)?today:year+"-12-31"};}
+function validRange(start,end){if(!start||!end)throw new Error("Preencha a data inicial e a data final.");const span=(Date.parse(end)-Date.parse(start))/86400000;if(span<0)throw new Error("A data final deve ser igual ou posterior à inicial.");if(span>366*5)throw new Error("Selecione um intervalo de até cinco anos.");if(end>today)throw new Error("Selecione datas até hoje; o acervo não contém previsões.");}
+function stationsFor(prefix){const mode=$(prefix+"variables").value;const result=[];if(mode!=="river"&&$(prefix+"rain").value)result.push($(prefix+"rain").value);if(mode!=="rain"&&$(prefix+"river").value)result.push($(prefix+"river").value);return result;}
+function syncStationControls(prefix){const mode=$(prefix+"variables").value;$(prefix+"rain").disabled=mode==="river";$(prefix+"river").disabled=mode==="rain";}
+function historyMode(){const custom=$("h-mode").value==="custom";$("h-year-field").hidden=custom;$("h-start-field").hidden=!custom;$("h-end-field").hidden=!custom;}
+function periodMode(){const kind=$("period-kind").value;["event-phase-field","event-select-field"].forEach(id=>$(id).hidden=kind!=="event");$("compare-year-field").hidden=kind!=="year";["compare-start-field","compare-end-field"].forEach(id=>$(id).hidden=kind!=="custom");}
+function resetHistory(){const availableYear=catalog.stations.find(s=>s.kind==="river"&&s.last_valid)?.last_valid?.slice(0,4)||recentWindow?.end.slice(0,4)||String(currentYear);$("h-mode").value="year";$("h-year").value=$("h-year").querySelector('option[value="2015"]')?"2015":availableYear;$("h-phase").value="all";$("h-resolution").value="monthly";$("h-variables").value=$("h-river").value?"both":"rain";$("h-rain").selectedIndex=0;$("h-river").selectedIndex=0;const range=rangeForYear($("h-year").value);$("h-start").value=range.start;$("h-end").value=range.end;historyMode();syncStationControls("h-");}
+function eventOptions(){const phase=$("event-phase").value;const previous=$("event-select").value;$("event-select").replaceChildren();const events=[...catalog.events].filter(e=>phase==="all"||phaseOf(e)===phase).sort((a,b)=>(Boolean(b.samples)-Boolean(a.samples))||b.start.localeCompare(a.start));for(const e of events){$("event-select").add(new Option(`${e.label} · ${monthLabel(e.start)}–${monthLabel(e.end)}${e.samples?"":" · sem dados locais"}`,e.id));}if(events.some(e=>e.id===previous))$("event-select").value=previous;if(!events.length)$("event-select").add(new Option("Nenhum período classificado",""));}
+function eventWindow(e){return {id:e.id,label:e.label,start:e.start,end:e.end,phase:phaseOf(e)};}
+function preset(){const available=catalog.events.filter(e=>e.samples);const find=(phase,preferred)=>available.find(e=>phaseOf(e)===phase&&e.start.startsWith(preferred))||available.filter(e=>phaseOf(e)===phase).sort((a,b)=>b.samples-a.samples)[0];const warm=find("warm","2014"),cold=find("cold","2016");selected=[warm,cold].filter(Boolean).map(eventWindow);if(!selected.length)selected=available.slice(-2).map(eventWindow);renderSelection();}
+function renderSelection(){const box=$("selection-summary");box.innerHTML=`<span class="selection-count">${selected.length}/3 períodos selecionados</span>`+selected.map((w,i)=>`<div class="selection-chip" style="border-left-color:${colorFor(w.id,i)}"><div><strong>${esc(w.label)}</strong><small>${dateLabel(w.start)} — ${dateLabel(w.end)}</small></div><button type="button" data-remove="${esc(w.id)}" aria-label="Remover ${esc(w.label)}">×</button></div>`).join("");box.querySelectorAll("[data-remove]").forEach(b=>b.onclick=()=>{selected=selected.filter(w=>w.id!==b.dataset.remove);renderSelection();refreshComparison();});}
+function colorFor(id,index){const w=selected.find(w=>w.id===id);const selectedIndex=selected.findIndex(item=>item.id===id);if(!w?.phase)return palette[(selectedIndex<0?index:selectedIndex)%palette.length];const shades={warm:["#ae602d","#cc9541","#8f4353"],cold:["#326db6","#6c66a8","#28878e"],neutral:["#5b8070","#668d9d","#9b854c"]};const offset=selected.filter(item=>item.phase===w.phase).findIndex(item=>item.id===id);return shades[w.phase]?.[Math.max(0,offset)]||palette[index%palette.length];}
+function addPeriod(e){e.preventDefault();try{if(selected.length>=3)throw new Error("Você já selecionou três períodos. Remova um para adicionar outro.");const kind=$("period-kind").value;let window;if(kind==="event"){const event=catalog.events.find(e=>e.id===$("event-select").value);if(!event)throw new Error("Escolha um episódio disponível no catálogo.");window=eventWindow(event);}else if(kind==="year"){const year=$("compare-year").value;window={id:"year-"+year,label:"Ano "+year,...rangeForYear(year)};}else{const start=$("current-start").value,end=$("current-end").value;validRange(start,end);window={id:"custom-"+start+"-"+end,label:dateLabel(start)+" a "+dateLabel(end),start,end};}if(selected.some(w=>w.id===window.id||w.start===window.start&&w.end===window.end))throw new Error("Esse período já está na comparação.");selected.push(window);renderSelection();refreshComparison();}catch(error){setStatus("status",error.message,true);}}
+function resultIds(kind){return kind==="history"?{status:"h-status",results:"h-results",charts:"h-charts",metrics:"h-metrics",values:"h-values",insights:"h-insights",download:"h-download"}:{status:"status",results:"comparison-results",charts:"charts",metrics:"metrics",values:"values",insights:"insights",download:"download"};}
+function beginRequest(kind){controllers[kind]?.abort();controllers[kind]=new AbortController();const ids=resultIds(kind);const id=++requestIds[kind];displayed[kind]=[];["charts","metrics","values","insights"].forEach(key=>$(ids[key]).replaceChildren());$(ids.download).disabled=true;$(ids.results).setAttribute("aria-busy","true");setStatus(ids.status,"Consultando as séries persistidas…",false,true);return {id,signal:controllers[kind].signal,ids};}
+async function refreshHistory(){if(!catalog)return;const req=beginRequest("history");syncStationControls("h-");try{const range=$("h-mode").value==="year"?rangeForYear($("h-year").value):{start:$("h-start").value,end:$("h-end").value};validRange(range.start,range.end);const stationIds=stationsFor("h-");if(!stationIds.length)throw new Error("Nenhuma série disponível para a variável selecionada.");const phase=$("h-phase").value,resolution=$("h-resolution").value;const label=$("h-mode").value==="year"?"Ano "+$("h-year").value:dateLabel(range.start)+" a "+dateLabel(range.end);$("h-heading").textContent=label+(phase==="all"?"":" · "+phases[phase]);const series=await Promise.all(stationIds.map(async station=>{const s=await api("./api/series?"+new URLSearchParams({station,...range,resolution,phase}),req.signal);return {...s,label,window_id:"history"};}));if(req.id!==requestIds.history)return;renderResults("history",series,{daily:resolution==="daily",relative:false});setStatus(req.ids.status,series.every(s=>!s.valid)?"Não há observações disponíveis para esse recorte e fase climática.":"");}catch(error){if(error.name!=="AbortError"&&req.id===requestIds.history){setStatus(req.ids.status,error.message,true);$(req.ids.charts).innerHTML='<div class="empty">A consulta não foi concluída. Ajuste os filtros ou tente novamente.</div>';}}finally{if(req.id===requestIds.history)$(req.ids.results).setAttribute("aria-busy","false");}}
+async function refreshComparison(){if(!catalog)return;const req=beginRequest("comparison");syncStationControls("");$("alignment").textContent="";try{if(!selected.length){setStatus("status","Selecione um período para visualizar ou até três para comparar.");$("charts").innerHTML='<div class="empty"><strong>Sua comparação começa aqui</strong>Adicione um episódio, um ano ou um intervalo de datas.</div>';return;}const stationIds=stationsFor("");if(!stationIds.length)throw new Error("Nenhuma série disponível para a variável selecionada.");const resolution=$("resolution").value;const result=await api("./api/compare?"+new URLSearchParams({windows:JSON.stringify(selected),stations:stationIds.join(","),resolution,common:$("common").checked,phase:"all"}),req.signal);if(req.id!==requestIds.comparison)return;renderResults("comparison",result.series,{daily:resolution==="daily",relative:true});$("alignment").textContent=`${selected.length} período(s) · ${resolution==="daily"?"dias":"meses"} relativos ao início · ${$("common").checked?"mesma duração no trecho exibido":"durações originais"}. Datas originais nos pontos e na tabela.`;if(result.reason)$("charts").innerHTML=`<div class="empty">${esc(result.reason)}</div>`;setStatus("status","");}catch(error){if(error.name!=="AbortError"&&req.id===requestIds.comparison){setStatus("status",error.message,true);$("charts").innerHTML='<div class="empty">A comparação não foi concluída. Revise as datas e a opção de trecho comum.</div>';}}finally{if(req.id===requestIds.comparison)$(req.ids.results).setAttribute("aria-busy","false");}}
+function summaryFor(s){if(s.summary)return s.summary;const points=s.points.filter(p=>p.value!=null);const rain=s.station.kind==="grid";const total=points.reduce((n,p)=>n+p.value,0);return {mean_daily:s.valid?(rain?total/s.valid:points.reduce((n,p)=>n+p.value*p.valid,0)/s.valid):null,mean_unit:rain?"mm/dia":"m",total:rain&&s.valid?total:null,maximum:null,maximum_date:null};}
+function pointState(p){if(p.unclassified&&p.excluded)return "Sem classificação ENSO";if(p.excluded)return "Fora da fase selecionada";if(p.value==null)return "Sem medição";return p.partial?"Parcial":"Completo";}
+function renderResults(kind,series,options){displayed[kind]=series;const ids=resultIds(kind);$(ids.download).disabled=!series.some(s=>s.points.length);$(ids.metrics).innerHTML=series.map((s,i)=>{const rain=s.station.kind==="grid",summary=summaryFor(s);const color=kind==="comparison"?colorFor(s.window_id,i):palette[rain?0:1];return `<article class="metric" style="border-top-color:${color}"><div class="metric-title">${esc(s.label)}<br>${esc(s.station.name)}</div><strong class="metric-value">${fmt(summary.mean_daily)} <small>${summary.mean_daily==null?"":esc(summary.mean_unit||s.unit)}</small></strong><p>${rain?"Chuva média por dia observado":"Nível médio nos dias observados"}</p>${rain?`<p>Acumulado observado: <strong>${fmt(summary.total)} ${s.valid?"mm":""}</strong></p>`:""}<div class="coverage-bar" aria-hidden="true"><span style="width:${s.coverage||0}%"></span></div><p><strong>${s.coverage==null?"Sem dias elegíveis":fmt(s.coverage)+"% de cobertura"}</strong> · ${fmt(s.valid)}/${fmt(s.expected)} dias</p><p>${fmt(s.missing)} dias sem medição${s.excluded?" · "+fmt(s.excluded)+" fora da fase":""}${s.unclassified?" · "+fmt(s.unclassified)+" sem índice":""}</p><p>${dateLabel(s.start)} — ${dateLabel(s.end)}</p></article>`;}).join("");const stationIds=[...new Set(series.map(s=>s.station.id))];for(const station of stationIds)drawChart($(ids.charts),series.filter(s=>s.station.id===station),options);$(ids.values).innerHTML=series.flatMap(s=>s.points.map(p=>`<tr><td>${esc(s.label)}</td><td>${esc(s.station.name)}</td><td>${dateLabel(p.date)}</td><td>${dateLabel(p.end)}</td><td>${fmt(p.value)}</td><td>${esc(s.unit)}</td><td>${esc(phases[p.phase]||"Não classificado")}</td><td>${p.valid}/${p.expected}</td><td class="${p.partial?"partial-label":""}">${pointState(p)}</td></tr>`)).join("")||'<tr><td colspan="9" class="table-empty">Nenhum valor neste recorte.</td></tr>';$(ids.insights).innerHTML=series.filter(s=>summaryFor(s).maximum!=null).map(s=>{const summary=summaryFor(s);return `<div class="insight"><strong>Maior valor diário observado · ${esc(s.label)}</strong>${esc(s.station.name)}: <b>${fmt(summary.maximum)} ${esc(s.unit)}</b> em ${dateLabel(summary.maximum_date)}. Referência descritiva entre ${fmt(s.valid)} dias observados; não define um limiar de risco.</div>`;}).join("");}
+function drawChart(target,series,{daily=false,relative=false,compact=false}={}){const first=series[0],rain=first.station.kind==="grid",values=series.flatMap(s=>s.points.map(p=>p.value)).filter(v=>v!=null);const box=document.createElement("div");box.className="chart";const heading=`${rain?"Precipitação":"Nível do rio"} · ${daily?rain?"diária":"média diária":rain?"acumulado mensal":"média mensal"} (${first.unit})`;box.innerHTML=`<h3>${heading}</h3><p class="chart-description">${esc(first.station.name)} · ${esc(first.station.source_name)}${rain?" · produto em grade":" · referencial: "+esc(first.station.datum||"não informado")}</p>`;target.append(box);if(!values.length){box.innerHTML+='<div class="empty"><strong>Sem medições neste recorte</strong>A ausência de dados não significa ausência de chuva ou nível zero. Altere o período ou a fase para explorar outra parte do acervo.</div>';return;}const W=1000,H=compact?310:340,L=65,R=22,T=20,B=58,n=Math.max(...series.map(s=>s.points.length)),usable=W-L-R;let lo=Math.min(0,...values),hi=Math.max(...values);if(hi===lo)hi=lo+1;hi+=(hi-lo)*.12;const x=i=>L+(i+.5)*usable/n,y=v=>H-B-(v-lo)/(hi-lo)*(H-T-B);let svg=`<svg class="chart-plot" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(heading)}. Explore os pontos pelo controle abaixo; valores também disponíveis na tabela.">`;for(let k=0;k<5;k++){const v=lo+(hi-lo)*k/4;svg+=`<line x1="${L}" y1="${y(v)}" x2="${W-R}" y2="${y(v)}" stroke="#e5ecef"/><text x="${L-10}" y="${y(v)+4}" text-anchor="end" font-size="12" fill="#6d8590">${fmt(v)}</text>`;}const step=Math.max(1,Math.ceil(n/(compact?8:10)));for(let i=0;i<n;i+=step){const p=first.points[i];const label=relative?String(i+1):daily?p?.date.slice(8,10)+"/"+p?.date.slice(5,7):monthLabel(p?.date);svg+=`<text x="${x(i)}" y="${H-33}" text-anchor="middle" font-size="12" fill="#6a818c">${esc(label)}</text>`;}svg+=`<text x="${W/2}" y="${H-8}" text-anchor="middle" font-size="11" fill="#718791">${relative?(daily?"Dia":"Mês")+" relativo ao início de cada período":daily?"Data da observação":"Mês da observação"}</text>`;series.forEach((s,j)=>{const color=relative?colorFor(s.window_id,j):palette[rain?0:1];let previous=null;for(let i=0;i<s.points.length;i++){const p=s.points[i];if(p.value==null){previous=null;continue;}const tip=esc(`${s.label} | ${dateLabel(p.date)} a ${dateLabel(p.end)} | ${fmt(p.value)} ${s.unit} | ${p.valid}/${p.expected} dias | ${pointState(p)}`);if(rain&&!daily){const bw=Math.max(1,usable/n/(series.length+1));const bx=x(i)+(j-series.length/2)*bw;svg+=`<rect x="${bx}" y="${y(p.value)}" width="${bw*.83}" height="${Math.max(1,y(0)-y(p.value))}" rx="1.5" fill="${color}" opacity="${p.partial?.42:.86}"${p.partial?` stroke="${color}" stroke-dasharray="3 2"`:""}><title>${tip}</title></rect>`;}else{if(previous&&!p.partial&&!previous.p.partial)svg+=`<line x1="${x(previous.i)}" y1="${y(previous.p.value)}" x2="${x(i)}" y2="${y(p.value)}" stroke="${color}" stroke-width="2"${j?` stroke-dasharray="${j===1?"7 4":"2 3"}"`:""}/>`;svg+=`<circle cx="${x(i)}" cy="${y(p.value)}" r="${n>100?2:3.7}" fill="${p.partial?"white":color}" stroke="${color}"><title>${tip}</title></circle>`;previous={p,i};}}});svg+=`<line class="cursor-line" x1="${x(0)}" x2="${x(0)}" y1="${T}" y2="${H-B}" stroke="#678894" stroke-width="1" stroke-dasharray="4 4"/></svg>`;box.innerHTML+=`<div class="plot-scroll" tabindex="0" role="region" aria-label="Gráfico com rolagem horizontal">${svg}</div><p class="mobile-hint">Deslize o gráfico para ver o período completo.</p><div class="legend">${series.map((s,j)=>`<span><i class="swatch" style="background:${relative?colorFor(s.window_id,j):palette[rain?0:1]}"></i>${esc(s.label)}</span>`).join("")}<span>Transparente / vazio = parcial · intervalo sem ponto = sem dado</span></div><div class="chart-controls"><label>Explorar ponto <input class="chart-cursor" type="range" min="0" max="${n-1}" value="0" step="1" aria-label="Explorar datas de ${esc(heading)}" /></label><span>Use o mouse, toque ou as setas do teclado.</span></div><div class="chart-readout" role="status" aria-live="polite"></div><p class="chart-footnote">${series.map(s=>`${esc(s.label)}: ${dateLabel(s.start)}–${dateLabel(s.end)} · coleta ${esc(collected(s.collected_at))}`).join("<br>")}</p>`;const cursor=box.querySelector(".chart-cursor"),line=box.querySelector(".cursor-line"),readout=box.querySelector(".chart-readout"),plot=box.querySelector("svg");function inspect(index){index=Math.max(0,Math.min(n-1,index));cursor.value=index;line.setAttribute("x1",x(index));line.setAttribute("x2",x(index));const texts=series.map(s=>{const p=s.points[index];if(!p)return `${s.label}: fora da duração.`;return `${s.label} · ${dateLabel(p.date)}${p.end!==p.date?" a "+dateLabel(p.end):""}: ${fmt(p.value)} ${p.value==null?"":s.unit} · ${p.valid}/${p.expected} dias · ${pointState(p)} · ${phases[p.phase]||"fase não classificada"}`;});readout.innerHTML=texts.map(t=>`<span>${esc(t)}</span>`).join("");cursor.setAttribute("aria-valuetext",texts.join("; "));}cursor.oninput=()=>inspect(Number(cursor.value));let frame;plot.addEventListener("pointermove",event=>{if(frame)cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{const rect=plot.getBoundingClientRect();inspect(Math.floor(((event.clientX-rect.left)/rect.width*W-L)/usable*n));});});plot.addEventListener("click",event=>{const rect=plot.getBoundingClientRect();inspect(Math.floor(((event.clientX-rect.left)/rect.width*W-L)/usable*n));});inspect(0);}
+function download(kind){const series=displayed[kind];if(!series.length)return;const cells=v=>{let s=String(v??"");if(typeof v==="string"&&/^[=+@\-\t\r]/.test(s))s="'"+s;return '"'+s.replaceAll('"','""')+'"';};const rows=[["periodo","estacao","fonte","latitude","longitude","inicio","fim","valor","unidade","fase_enso","dias_validos","dias_elegiveis","situacao","coletado_em"]];for(const s of series)for(const p of s.points)rows.push([s.label,s.station.name,s.station.source_name,s.station.latitude,s.station.longitude,p.date,p.end,p.value,s.unit,phases[p.phase]||"não classificado",p.valid,p.expected,pointState(p),s.collected_at]);const url=URL.createObjectURL(new Blob(["\ufeff"+rows.map(row=>row.map(cells).join(";")).join("\r\n")],{type:"text/csv;charset=utf-8"}));const a=document.createElement("a");a.href=url;a.download=kind==="history"?"chuva-x-rio-historico.csv":"chuva-x-rio-comparacao.csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function renderCatalog(){const rain=catalog.stations.filter(s=>s.kind==="grid"),rivers=catalog.stations.filter(s=>s.kind==="river");["rain","h-rain"].forEach(id=>fillSelect(id,rain));["river","h-river"].forEach(id=>fillSelect(id,rivers));const starts=catalog.stations.map(s=>s.first_valid).filter(Boolean).sort(),ends=catalog.stations.map(s=>s.last_valid).filter(Boolean).sort();const indices=catalog.indices||[];const episodes=catalog.events.filter(e=>["warm","cold"].includes(phaseOf(e)));const counts=p=>catalog.events.filter(e=>phaseOf(e)===p).length;$("overview-kpis").innerHTML=[{label:"Precipitação",value:fmt(rain.reduce((a,s)=>a+s.samples,0)),detail:`Registros diários · ${rain.length} pontos em grade`,icon:"↧"},{label:"Nível do rio",value:fmt(rivers.reduce((a,s)=>a+s.samples,0)),detail:`Registros diários · ${rivers.length} estação(ões) ANA`,icon:"≈"},{label:"Janelas do histórico local",value:starts.length?starts[0].slice(0,4)+"–"+ends.at(-1).slice(0,4):"Sem dados",detail:"Acervo em intervalos descontínuos",icon:"◷"},{label:"Episódios ENSO catalogados",value:fmt(episodes.length),detail:`${counts("warm")} El Niño · ${counts("cold")} La Niña`,icon:"◌"}].map(k=>`<article class="kpi"><span class="kpi-icon" aria-hidden="true">${k.icon}</span><span class="kpi-label">${k.label}</span><strong class="kpi-value">${k.value}</strong><p>${k.detail}</p></article>`).join("");$("phase-counts").innerHTML=["warm","cold","neutral"].map(p=>`<div>${phasePill(p)}<span>${fmt(indices.filter(i=>i.phase===p).length)} meses centrais</span></div>`).join("");const firstIndex=indices[0],last=indices.at(-1);$("enso-note").textContent=last?`Calendário disponível: ${monthLabel(firstIndex.date)} a ${monthLabel(last.date)}. Última temporada: RONI ${fmt(last.value)} °C; ${phases[last.phase]||"não classificada"}. Referência climatológica do RONI: 1991–2020. As marcações podem ser revisadas pela NOAA.`:"Índices ENSO ainda não carregados.";$("sources").innerHTML=`<article class="panel"><span class="source-number">01 / CLIMA</span><h3>NOAA / CPC</h3><span class="phase-pill">RONI · ERSSTv6</span><p>Índice e marcações oficiais de episódios El Niño, La Niña e meses sem episódio confirmado. A classificação é aplicada por mês central da temporada.</p><a class="source-link" href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/" target="_blank" rel="noreferrer">Consultar NOAA ↗</a></article><article class="panel"><span class="source-number">02 / PRECIPITAÇÃO</span><h3>NASA POWER</h3><span class="phase-pill">PRECTOTCORR · mm/dia</span><p>Produto meteorológico em grade, em coordenadas aproximadas de Ibirama e Presidente Getúlio. Datas civis em LST. Pontos próximos podem compartilhar a mesma célula; não são pluviômetros locais.</p><a class="source-link" href="https://power.larc.nasa.gov/docs/services/api/temporal/daily/" target="_blank" rel="noreferrer">Consultar NASA POWER ↗</a></article><article class="panel"><span class="source-number">03 / NÍVEL DOS RIOS</span><h3>ANA / SNIRH</h3><span class="phase-pill">Estação 83440000 · Ibirama</span><p>Rio Itajaí do Norte / Hercílio. Médias diárias consistidas, de escala, convertidas de centímetros para metros. Referencial altimétrico não informado: a cota não é altitude absoluta. ${rivers.length?"Consulte as datas efetivamente carregadas abaixo.":"Não há série validada carregada."}</p><a class="source-link" href="https://www.snirh.gov.br/hidroweb/" target="_blank" rel="noreferrer">Consultar HidroWeb ↗</a></article>`;$("coverage").innerHTML=catalog.stations.map(s=>`<tr><td>${esc(s.name)} · ${s.kind==="grid"?"precipitação em grade":"nível do rio"}</td><td>${dateLabel(s.first_valid)}</td><td>${dateLabel(s.last_valid)}</td><td>${fmt(s.samples)}</td></tr>`).join("");$("runs").innerHTML=catalog.runs.map(r=>`<tr><td>${esc(r.source_id)}</td><td>${esc(collected(r.finished))}</td><td title="${esc(r.message)}">${esc(r.status)}</td><td>${r.inserted} / ${r.updated} / ${r.duplicates} / ${r.rejected}</td></tr>`).join("");const firstYear=Math.min(1950,Number(starts[0]?.slice(0,4)||1950));for(const id of ["h-year","compare-year"]){$(id).replaceChildren();for(let year=currentYear;year>=firstYear;year--)$(id).add(new Option(String(year),String(year)));}$("compare-year").value="2015";for(const id of ["h-start","h-end","current-start","current-end"])$(id).max=today;$("current-start").value="2015-01-01";$("current-end").value="2015-12-31";eventOptions();preset();resetHistory();syncStationControls("");}
+async function renderOverview(){const station=catalog.stations.find(s=>s.kind==="grid"&&s.last_valid);const box=$("overview-chart");box.innerHTML="";if(!station){box.innerHTML='<div class="empty">Nenhuma série de precipitação carregada.</div>';box.setAttribute("aria-busy","false");$("open-recent").disabled=true;return;}recentWindow={station:station.id,start:station.last_valid.slice(0,4)+"-01-01",end:station.last_valid};$("overview-period").textContent=monthLabel(recentWindow.start)+" — "+monthLabel(recentWindow.end);$("overview-note").textContent=station.name+" · soma mensal dos dias disponíveis. Última observação: "+dateLabel(station.last_valid)+".";try{const s=await api("./api/series?"+new URLSearchParams({...recentWindow,resolution:"monthly",phase:"all"}));drawChart(box,[{...s,label:"Observações de "+recentWindow.end.slice(0,4),window_id:"overview"}],{compact:true});}catch(error){box.innerHTML=`<div class="empty">${esc(error.message)}</div>`;}finally{box.setAttribute("aria-busy","false");}}
+async function init(){setStatus("app-status","Carregando o acervo local…",false,true);$("retry").hidden=true;try{catalog=await api("./api/catalog");renderCatalog();setStatus("app-status","");navigate(location.hash.slice(1)||activeTab);await renderOverview();}catch(error){setStatus("app-status","Não foi possível carregar o acervo: "+error.message,true);$("retry").hidden=false;$("overview-chart").setAttribute("aria-busy","false");$("overview-chart").innerHTML='<div class="empty">O acervo local está indisponível. Tente carregar novamente.</div>';}}
+bindNavigation();$("retry").onclick=init;$("h-reset").onclick=()=>{if(catalog){resetHistory();refreshHistory();}};$("h-mode").onchange=()=>{historyMode();refreshHistory();};["h-year","h-start","h-end","h-phase","h-rain","h-river","h-resolution","h-variables"].forEach(id=>$(id).addEventListener("change",()=>{if(id==="h-year"){const range=rangeForYear($("h-year").value);$("h-start").value=range.start;$("h-end").value=range.end;}refreshHistory();}));["rain","river","resolution","variables","common"].forEach(id=>$(id).addEventListener("change",refreshComparison));$("period-kind").onchange=periodMode;$("event-phase").onchange=()=>{if(catalog)eventOptions();};$("period-form").onsubmit=addPeriod;$("preset-enso").onclick=()=>{if(catalog){preset();refreshComparison();}};$("h-download").onclick=()=>download("history");$("download").onclick=()=>download("comparison");$("open-recent").onclick=()=>{if(!recentWindow)return;$("h-mode").value="custom";$("h-year").value=recentWindow.end.slice(0,4);$("h-start").value=recentWindow.start;$("h-end").value=recentWindow.end;$("h-phase").value="all";$("h-rain").value=recentWindow.station;$("h-variables").value="rain";$("h-resolution").value="monthly";historyMode();historyLoaded=true;navigate("history");refreshHistory();$("app-main").scrollIntoView({block:"start"});};
+if(location.protocol!=="file:")init();else document.querySelectorAll("main button,main input,main select").forEach(el=>el.disabled=true);
 
-function renderSelection() {
-  $("selection-summary").innerHTML = "";
-  const label = document.createElement("span");
-  label.textContent = `${selected.size}/3 períodos selecionados`;
-  $("selection-summary").append(label);
-  for (const id of selected) {
-    const event = catalog?.events.find((e) => e.id === id);
-    const b = document.createElement("button");
-    b.textContent =
-      (event?.label ||
-        (id === "current" ? "Período atual" : "Intervalo personalizado")) +
-      " ×";
-    b.setAttribute("aria-label", "Remover " + (event?.label || id));
-    b.onclick = () => toggle(id);
-    $("selection-summary").append(b);
-  }
-}
+
+

@@ -11,7 +11,7 @@ from urllib.request import urlopen, Request
 from urllib.parse import urlencode
 import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup
-from .db import ROOT
+from .db import ROOT, rebuild_events
 
 NOAA_URL = 'https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/'
 
@@ -106,7 +106,10 @@ def import_noaa(db, path=None):
                 if not span:
                     raise ValueError('Formato NOAA mudou: classificação ausente')
                 phase = next(p for p in ('warm','cold','normal') if f'roni-{p}' in span['class'])
-                rows.append((date(year,month,1).isoformat(),float(span.get_text()),phase))
+                value = float(span.get_text())
+                if not math.isfinite(value):
+                    raise ValueError('Índice NOAA inválido')
+                rows.append((date(year,month,1).isoformat(),value,'neutral' if phase == 'normal' else phase))
         if len(rows) < 12 or len({r[0] for r in rows}) != len(rows):
             raise ValueError('Tabela RONI incompleta ou duplicada')
         previous_rows = {r['date']:(r['value'],r['phase']) for r in db.execute('SELECT * FROM enso_index')}
@@ -117,31 +120,17 @@ def import_noaa(db, path=None):
                 f'Tabela RONI truncada: {len(missing_dates)} temporadas já armazenadas ausentes; histórico preservado'
             )
         if previous_rows == {d:(v,p) for d,v,p in rows}:
+            # Repair old warm-only event catalogs even when the source is unchanged.
+            rebuild_events(db)
             counts['duplicates'] = len(rows)
             return
-        # Import the source's own warm labels; never infer episodes from numeric thresholds.
+        # Import the source's own labels; never infer episodes from numeric thresholds.
         db.execute('DELETE FROM event')
         db.execute('DELETE FROM enso_index')
-        group = []
-        def save_group():
-            if group:
-                first, last = group[0], date.fromisoformat(group[-1])
-                end = last.replace(day=calendar.monthrange(last.year,last.month)[1]).isoformat()
-                db.execute('INSERT INTO event VALUES(?,?,?,?,?)',
-                           ('roni-'+first, first,end,f'{first[:7]} → {end[:7]}',run_id))
-        previous = None
         for day, value, phase in sorted(rows):
-            current = date.fromisoformat(day)
-            ordinal = current.year * 12 + current.month
-            if phase != 'warm' or (previous is not None and ordinal != previous+1):
-                save_group()
-                group.clear()
-            if phase == 'warm':
-                group.append(day)
             db.execute('INSERT INTO enso_index VALUES(?,?,?,?)',(day,value,phase,run_id))
             counts['updated' if day in previous_rows else 'inserted'] += 1
-            previous = ordinal
-        save_group()
+        rebuild_events(db)
     return run(db,'noaa',NOAA_URL,lambda: path.read_bytes() if path else fetch(NOAA_URL),consume)
 
 
