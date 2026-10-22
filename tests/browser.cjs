@@ -363,7 +363,7 @@ async function checkLayouts(page) {
       await page.waitForFunction(() => !document.querySelector('.tab-panel:not([hidden]) [aria-busy="true"]'));
       assert.equal(await page.getByRole("tabpanel").count(), 1);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `page overflow at ${width}, ${tab}`);
-      await page.screenshot({ path: path.join(screenshots, `${filename}-${width}.png`), fullPage: true });
+      await page.screenshot({ path: path.join(screenshots, `${filename}-${width}.png`), fullPage: true, animations: "disabled" });
       for (const summary of await page.locator(`#panel-${tab} details summary`).all()) {
         await summary.click();
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `expanded table overflow at ${width}, ${tab}`);
