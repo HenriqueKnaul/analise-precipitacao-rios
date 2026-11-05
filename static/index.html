@@ -93,6 +93,10 @@
       Diferenças lado a lado
      </small>
     </button>
+    <button aria-controls="panel-reports" aria-selected="false" data-tab="reports" id="tab-reports" role="tab" tabindex="-1">
+     <span class="nav-label">Relatórios</span>
+     <small>Estatísticas e exportação</small>
+    </button>
     <button aria-controls="panel-methodology" aria-selected="false" data-tab="methodology" id="tab-methodology" role="tab" tabindex="-1">
      <span class="nav-label">
       Fontes e método
@@ -436,7 +440,7 @@
         <summary>
          Adicionar um período
          <span>
-          Episódio, ano ou intervalo de datas
+          Episódio, ano, período atual ou intervalo
          </span>
         </summary>
         <form id="period-form">
@@ -449,6 +453,9 @@
             </option>
             <option value="year">
              Ano
+            </option>
+            <option value="current">
+             Período atual
             </option>
             <option value="custom">
              Intervalo de datas
@@ -490,6 +497,7 @@
            Data final
            <input id="current-end" type="date"/>
           </label>
+          <p class="filter-hint wide" id="compare-current-hint" hidden>Do início do ano até o último dia com dados para as séries selecionadas.</p>
           <button class="primary" id="add-period" type="submit">
            + Adicionar
           </button>
@@ -644,6 +652,67 @@
      </details>
     </div>
    </section>
+   <section aria-labelledby="tab-reports" class="tab-panel" hidden id="panel-reports" role="tabpanel">
+    <div class="page-title">
+     <h1>Relatórios consolidados</h1>
+     <p>Reúna chuva, nível do rio e cobertura em um resumo para compartilhar.</p>
+    </div>
+    <section class="panel report-filters" aria-labelledby="report-filters-title">
+     <h2 id="report-filters-title">Recorte do relatório</h2>
+     <div class="filters">
+      <label>Data inicial <input id="r-start" type="date"></label>
+      <label>Data final <input id="r-end" type="date"></label>
+      <label>Variáveis
+       <select id="r-variables">
+        <option value="both">Chuva e nível</option>
+        <option value="rain">Precipitação</option>
+        <option value="river">Nível do rio</option>
+       </select>
+      </label>
+      <label>Fase ENSO
+       <select id="r-phase">
+        <option value="all">Todas as fases</option>
+        <option value="warm">El Niño</option>
+        <option value="cold">La Niña</option>
+        <option value="neutral">Neutro / sem episódio</option>
+       </select>
+      </label>
+      <label>Ponto de precipitação <select id="r-rain"></select></label>
+      <label>Estação de nível <select id="r-river"></select></label>
+      <label>Resolução
+       <select id="r-resolution">
+        <option value="monthly">Mensal</option>
+        <option value="daily">Diária</option>
+       </select>
+      </label>
+     </div>
+    </section>
+    <div class="status" id="r-status" role="status" aria-live="polite"></div>
+    <div class="results" id="r-results" aria-busy="false">
+     <div class="results-heading">
+      <h2>Resumo do período</h2>
+      <div class="report-actions">
+       <button class="secondary" id="r-download" disabled>Exportar CSV</button>
+       <button class="primary" id="r-print" disabled>Salvar PDF</button>
+      </div>
+     </div>
+     <p class="muted" id="r-context"></p>
+     <div class="report-summary" id="r-summary"></div>
+     <div id="r-charts"></div>
+     <p class="reading-note" id="r-note" hidden>As estatísticas usam os dias observados. Chuva mensal é soma e nível mensal é média. Meses parciais e lacunas aparecem no gráfico. O CSV inclui todos os pontos do recorte, com valores ausentes em branco.</p>
+     <details class="panel data-details" id="r-details" hidden>
+      <summary>Consultar série e cobertura <span>Os mesmos pontos do CSV</span></summary>
+      <div class="table-scroll" role="region" aria-label="Série consolidada" tabindex="0">
+       <table>
+        <thead>
+         <tr><th scope="col">Período</th><th scope="col">Local</th><th scope="col">Início</th><th scope="col">Fim</th><th scope="col">Valor</th><th scope="col">Unidade</th><th scope="col">Fase ENSO</th><th scope="col">Dias válidos / elegíveis</th><th scope="col">Situação</th></tr>
+        </thead>
+        <tbody id="r-values"></tbody>
+       </table>
+      </div>
+     </details>
+    </div>
+   </section>
    <section aria-labelledby="tab-methodology" class="tab-panel" hidden="" id="panel-methodology" role="tabpanel">
     <div class="page-title">
      <h1>
@@ -692,6 +761,31 @@
        </thead>
        <tbody id="coverage">
        </tbody>
+      </table>
+     </div>
+    </section>
+    <section class="panel" aria-labelledby="timeline-title">
+     <div class="section-title">
+      <div>
+       <p class="eyebrow">CALENDÁRIO NOAA/CPC</p>
+       <h2 id="timeline-title">Linha do tempo ENSO</h2>
+      </div>
+      <label>Fase
+       <select id="timeline-phase">
+        <option value="all">Todas as fases</option>
+        <option value="warm">El Niño</option>
+        <option value="cold">La Niña</option>
+        <option value="neutral">Neutro / sem episódio</option>
+       </select>
+      </label>
+     </div>
+     <p class="muted">Janelas em ordem cronológica, delimitadas pelos meses centrais do RONI. A cobertura local pode variar entre os pontos e as estações.</p>
+     <div class="table-scroll" role="region" aria-label="Linha do tempo ENSO" tabindex="0">
+      <table>
+       <thead>
+        <tr><th scope="col">Início</th><th scope="col">Fim</th><th scope="col">Fase</th><th scope="col">Registros locais</th><th scope="col">Explorar</th></tr>
+       </thead>
+       <tbody id="timeline"></tbody>
       </table>
      </div>
     </section>

@@ -11,14 +11,14 @@ const monthLabel = s => s ? monthNames[Number(s.slice(5,7))-1]+"/"+s.slice(2,4) 
 const collected = s => s ? new Date(s).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short",timeZone:"America/Sao_Paulo"}) : "Indisponível";
 const today = new Intl.DateTimeFormat("en-CA",{timeZone:"America/Sao_Paulo",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
 const currentYear = Number(today.slice(0,4));
-let catalog, activeTab="overview", recentWindow=null, historyLoaded=false, comparisonLoaded=false;
-let selected=[], displayed={history:[],comparison:[]}, requestIds={history:0,comparison:0}, controllers={};
+let catalog, activeTab="overview", recentWindow=null, historyLoaded=false, comparisonLoaded=false, reportLoaded=false;
+let selected=[], displayed={history:[],comparison:[],reports:[]}, requestIds={history:0,comparison:0,reports:0}, controllers={};
 function setStatus(id,message,error=false,loading=false){$(id).textContent=message;$(id).className="status"+(error?" error":"")+(loading?" loading-state":"");}
 async function api(url,signal){const response=await fetch(url,{signal});if(!(response.headers.get("content-type")||"").includes("application/json"))throw new Error("API indisponível. Abra iniciar.cmd ou execute python run.py para acessar os dados locais.");const data=await response.json();if(!response.ok)throw new Error(typeof data.detail==="string"?data.detail:"Não foi possível consultar os dados. Revise os filtros e tente novamente.");return data;}
 function phasePill(phase){return `<span class="phase-pill ${esc(phase||"unknown")}">${esc(phases[phase]||"Não classificado")}</span>`;}
 function phaseOf(e){return e.phase||null;}
-function navigate(name,focus=false){if(!["overview","history","comparison","methodology"].includes(name))name="overview";activeTab=name;document.querySelectorAll("[data-tab]").forEach(b=>{const chosen=b.dataset.tab===name;b.setAttribute("aria-selected",chosen);b.tabIndex=chosen?0:-1;$("panel-"+b.dataset.tab).hidden=!chosen;});if(location.hash!=="#"+name)history.replaceState(null,"","#"+name);if(focus)$("tab-"+name).focus();if(catalog&&name==="history"&&!historyLoaded){historyLoaded=true;refreshHistory();}if(catalog&&name==="comparison"&&!comparisonLoaded){comparisonLoaded=true;refreshComparison();}}
-function bindNavigation(){const tabs=[...document.querySelectorAll("[data-tab]")];tabs.forEach((b,i)=>{b.onclick=()=>navigate(b.dataset.tab);b.onkeydown=e=>{let target;if(e.key==="ArrowRight")target=(i+1)%tabs.length;if(e.key==="ArrowLeft")target=(i+tabs.length-1)%tabs.length;if(e.key==="Home")target=0;if(e.key==="End")target=tabs.length-1;if(target!==undefined){e.preventDefault();navigate(tabs[target].dataset.tab,true);}};});document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{navigate(b.dataset.go);$("app-main").scrollIntoView({block:"start"});});window.addEventListener("hashchange",()=>navigate(location.hash.slice(1)));}
+function navigate(name,focus=false){if(!($("tab-"+name)?.dataset.tab))name="overview";activeTab=name;document.querySelectorAll("[data-tab]").forEach(b=>{const chosen=b.dataset.tab===name;b.setAttribute("aria-selected",chosen);b.tabIndex=chosen?0:-1;$("panel-"+b.dataset.tab).hidden=!chosen;});if(location.hash!=="#"+name)history.replaceState(null,"","#"+name);if(focus)$("tab-"+name).focus();if(catalog&&name==="history"&&!historyLoaded){historyLoaded=true;refreshHistory();}if(catalog&&name==="comparison"&&!comparisonLoaded){comparisonLoaded=true;refreshComparison();}if(catalog&&name==="reports"&&!reportLoaded){reportLoaded=true;refreshReport();}}
+function bindNavigation(){const tabs=[...document.querySelectorAll("[data-tab]")];tabs.forEach((b,i)=>{b.onclick=()=>navigate(b.dataset.tab);b.onkeydown=e=>{let target;if(e.key==="ArrowRight")target=(i+1)%tabs.length;if(e.key==="ArrowLeft")target=(i+tabs.length-1)%tabs.length;if(e.key==="Home")target=0;if(e.key==="End")target=tabs.length-1;if(target!==undefined){e.preventDefault();navigate(tabs[target].dataset.tab,true);}};});document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{navigate(b.dataset.go);$("app-main").scrollIntoView({block:"start"});});window.addEventListener("hashchange",()=>{if(location.hash!=="#app-main")navigate(location.hash.slice(1));});}
 function fillSelect(id,stations){$(id).replaceChildren();if(!stations.length)$(id).add(new Option("Nenhuma série importada",""));stations.forEach(s=>$(id).add(new Option(s.name,s.id)));}
 function rangeForYear(year){return {start:year+"-01-01",end:year===String(currentYear)?today:year+"-12-31"};}
 function validRange(start,end){if(!start||!end)throw new Error("Preencha a data inicial e a data final.");const span=(Date.parse(end)-Date.parse(start))/86400000;if(span<0)throw new Error("A data final deve ser igual ou posterior à inicial.");if(span>366*5)throw new Error("Selecione um intervalo de até cinco anos.");if(end>today)throw new Error("Selecione datas até hoje; o acervo não contém previsões.");}
@@ -27,14 +27,14 @@ function syncStationControls(prefix){
   const mode=$(prefix+"variables").value;
   $(prefix+"rain").disabled=mode==="river";
   $(prefix+"river").disabled=mode==="rain";
-  const context=$(prefix==="h-"?"h-context":"comparison-context");
+  const context=prefix==="r-"?null:$(prefix==="h-"?"h-context":"comparison-context");
   if(context){
     const names=["rain","river"].filter(kind=>!$(prefix+kind).disabled&&$(prefix+kind).value).map(kind=>$(prefix+kind).selectedOptions[0].textContent);
     context.textContent=[$(prefix+"resolution").value==="daily"?"Diário":"Mensal",...names].join(" · ");
   }
 }
 function historyMode(){const custom=$("h-mode").value==="custom";$("h-year-field").hidden=custom;$("h-start-field").hidden=!custom;$("h-end-field").hidden=!custom;}
-function periodMode(){const kind=$("period-kind").value;["event-phase-field","event-select-field"].forEach(id=>$(id).hidden=kind!=="event");$("compare-year-field").hidden=kind!=="year";["compare-start-field","compare-end-field"].forEach(id=>$(id).hidden=kind!=="custom");}
+function periodMode(){const kind=$("period-kind").value;$("compare-current-hint").hidden=kind!=="current";["event-phase-field","event-select-field"].forEach(id=>$(id).hidden=kind!=="event");$("compare-year-field").hidden=kind!=="year";["compare-start-field","compare-end-field"].forEach(id=>$(id).hidden=kind!=="custom");}
 function resetHistory(){const availableYear=catalog.stations.find(s=>s.kind==="river"&&s.last_valid)?.last_valid?.slice(0,4)||recentWindow?.end.slice(0,4)||String(currentYear);$("h-mode").value="year";$("h-year").value=$("h-year").querySelector('option[value="2015"]')?"2015":availableYear;$("h-phase").value="all";$("h-resolution").value="monthly";$("h-variables").value=$("h-river").value?"both":"rain";$("h-rain").selectedIndex=0;$("h-river").selectedIndex=0;const range=rangeForYear($("h-year").value);$("h-start").value=range.start;$("h-end").value=range.end;historyMode();syncStationControls("h-");}
 function eventOptions(){
   const phase=$("event-phase").value,previous=$("event-select").value;
@@ -71,11 +71,96 @@ function renderSelection(){
   });
 }
 function colorFor(id,index){const w=selected.find(w=>w.id===id);const selectedIndex=selected.findIndex(item=>item.id===id);if(!w?.phase)return palette[(selectedIndex<0?index:selectedIndex)%palette.length];const shades={warm:["#ae602d","#cc9541","#8f4353"],cold:["#326db6","#6c66a8","#28878e"],neutral:["#5b8070","#668d9d","#9b854c"]};const offset=selected.filter(item=>item.phase===w.phase).findIndex(item=>item.id===id);return shades[w.phase]?.[Math.max(0,offset)]||palette[index%palette.length];}
-function addPeriod(e){e.preventDefault();try{if(selected.length>=3)throw new Error("Você já selecionou três períodos. Remova um para adicionar outro.");const kind=$("period-kind").value;let window;if(kind==="event"){const event=catalog.events.find(e=>e.id===$("event-select").value);if(!event)throw new Error("Escolha um episódio disponível no catálogo.");window=eventWindow(event);}else if(kind==="year"){const year=$("compare-year").value;window={id:"year-"+year,label:"Ano "+year,...rangeForYear(year)};}else{const start=$("current-start").value,end=$("current-end").value;validRange(start,end);window={id:"custom-"+start+"-"+end,label:dateLabel(start)+" a "+dateLabel(end),start,end};}if(selected.some(w=>w.id===window.id||w.start===window.start&&w.end===window.end))throw new Error("Esse período já está na comparação.");selected.push(window);renderSelection();refreshComparison();}catch(error){setStatus("status",error.message,true);}}
-function resultIds(kind){return kind==="history"?{status:"h-status",results:"h-results",charts:"h-charts",metrics:"h-metrics",values:"h-values",insights:"h-insights",download:"h-download"}:{status:"status",results:"comparison-results",charts:"charts",metrics:"metrics",values:"values",insights:"insights",download:"download"};}
-function beginRequest(kind){controllers[kind]?.abort();controllers[kind]=new AbortController();const ids=resultIds(kind);const id=++requestIds[kind];displayed[kind]=[];["charts","metrics","values","insights"].forEach(key=>$(ids[key]).replaceChildren());$(ids.download).disabled=true;$(ids.results).setAttribute("aria-busy","true");setStatus(ids.status,"Consultando as séries persistidas…",false,true);return {id,signal:controllers[kind].signal,ids};}
-async function refreshHistory(){if(!catalog)return;const req=beginRequest("history");syncStationControls("h-");try{const range=$("h-mode").value==="year"?rangeForYear($("h-year").value):{start:$("h-start").value,end:$("h-end").value};validRange(range.start,range.end);const stationIds=stationsFor("h-");if(!stationIds.length)throw new Error("Nenhuma série disponível para a variável selecionada.");const phase=$("h-phase").value,resolution=$("h-resolution").value;const label=$("h-mode").value==="year"?"Ano "+$("h-year").value:dateLabel(range.start)+" a "+dateLabel(range.end);$("h-heading").textContent=label+(phase==="all"?"":" · "+phases[phase]);const series=await Promise.all(stationIds.map(async station=>{const s=await api("./api/series?"+new URLSearchParams({station,...range,resolution,phase}),req.signal);return {...s,label,window_id:"history"};}));if(req.id!==requestIds.history)return;renderResults("history",series,{daily:resolution==="daily",relative:false});setStatus(req.ids.status,series.every(s=>!s.valid)?"Não há observações disponíveis para esse recorte e fase climática.":"");}catch(error){if(error.name!=="AbortError"&&req.id===requestIds.history){setStatus(req.ids.status,error.message,true);$(req.ids.charts).innerHTML='<div class="empty">A consulta não foi concluída. Ajuste os filtros ou tente novamente.</div>';}}finally{if(req.id===requestIds.history)$(req.ids.results).setAttribute("aria-busy","false");}}
-async function refreshComparison(){if(!catalog)return;const req=beginRequest("comparison");syncStationControls("");$("alignment").textContent="";try{if(!selected.length){setStatus("status","Selecione um período para visualizar ou até três para comparar.");$("charts").innerHTML='<div class="empty"><strong>Sua comparação começa aqui</strong>Adicione um episódio, um ano ou um intervalo de datas.</div>';return;}const stationIds=stationsFor("");if(!stationIds.length)throw new Error("Nenhuma série disponível para a variável selecionada.");const resolution=$("resolution").value;const result=await api("./api/compare?"+new URLSearchParams({windows:JSON.stringify(selected),stations:stationIds.join(","),resolution,common:$("common").checked,phase:"all"}),req.signal);if(req.id!==requestIds.comparison)return;renderResults("comparison",result.series,{daily:resolution==="daily",relative:true});$("alignment").textContent=`${selected.length} período(s) · ${resolution==="daily"?"dias":"meses"} relativos ao início · ${$("common").checked?"mesma duração no trecho exibido":"durações originais"}. Datas originais nos pontos e na tabela.`;if(result.reason)$("charts").innerHTML=`<div class="empty">${esc(result.reason)}</div>`;setStatus("status","");}catch(error){if(error.name!=="AbortError"&&req.id===requestIds.comparison){setStatus("status",error.message,true);$("charts").innerHTML='<div class="empty">A comparação não foi concluída. Revise as datas e a opção de trecho comum.</div>';}}finally{if(req.id===requestIds.comparison)$(req.ids.results).setAttribute("aria-busy","false");}}
+function addPeriod(e){e.preventDefault();try{if(selected.length>=3)throw new Error("Você já selecionou três períodos. Remova um para adicionar outro.");const kind=$("period-kind").value;let window;if(kind==="event"){const event=catalog.events.find(e=>e.id===$("event-select").value);if(!event)throw new Error("Escolha um episódio disponível no catálogo.");window=eventWindow(event);}else if(kind==="year"){const year=$("compare-year").value;window={id:"year-"+year,label:"Ano "+year,...rangeForYear(year)};}else if(kind==="current"){window={id:"current",label:"Período atual",current:true,...rangeForYear(String(currentYear))};}else{const start=$("current-start").value,end=$("current-end").value;validRange(start,end);window={id:"custom-"+start+"-"+end,label:dateLabel(start)+" a "+dateLabel(end),start,end};}if(selected.some(w=>w.id===window.id||w.start===window.start&&w.end===window.end))throw new Error("Esse período já está na comparação.");selected.push(window);renderSelection();refreshComparison();}catch(error){setStatus("status",error.message,true);}}
+function resultIds(kind){
+  if(kind==="reports")return {status:"r-status",results:"r-results",charts:"r-charts",summary:"r-summary",values:"r-values",download:"r-download"};
+  return kind==="history"?{status:"h-status",results:"h-results",charts:"h-charts",metrics:"h-metrics",values:"h-values",insights:"h-insights",download:"h-download"}:{status:"status",results:"comparison-results",charts:"charts",metrics:"metrics",values:"values",insights:"insights",download:"download"};}
+function beginRequest(kind){controllers[kind]?.abort();controllers[kind]=new AbortController();const ids=resultIds(kind);const id=++requestIds[kind];displayed[kind]=[];["charts","metrics","values","insights","summary"].forEach(key=>$(ids[key])?.replaceChildren());$(ids.download).disabled=true;$(ids.results).setAttribute("aria-busy","true");setStatus(ids.status,"Consultando as séries persistidas…",false,true);return {id,signal:controllers[kind].signal,ids};}
+async function refreshHistory(){if(!catalog)return;const req=beginRequest("history");syncStationControls("h-");try{const range=$("h-mode").value==="year"?rangeForYear($("h-year").value):{start:$("h-start").value,end:$("h-end").value};validRange(range.start,range.end);const stationIds=stationsFor("h-");if(!stationIds.length)throw new Error("Nenhuma série disponível para a variável selecionada.");const phase=$("h-phase").value,resolution=$("h-resolution").value;const label=$("h-mode").value==="year"?"Ano "+$("h-year").value:dateLabel(range.start)+" a "+dateLabel(range.end);$("h-heading").textContent=label+(phase==="all"?"":" · "+phases[phase]);const series=await querySeries(stationIds,range,resolution,phase,label,req.signal);if(req.id!==requestIds.history)return;renderResults("history",series,{daily:resolution==="daily",relative:false});setStatus(req.ids.status,series.every(s=>!s.valid)?"Não há observações disponíveis para esse recorte e fase climática.":"");}catch(error){if(error.name!=="AbortError"&&req.id===requestIds.history){setStatus(req.ids.status,error.message,true);$(req.ids.charts).innerHTML='<div class="empty">A consulta não foi concluída. Ajuste os filtros ou tente novamente.</div>';}}finally{if(req.id===requestIds.history)$(req.ids.results).setAttribute("aria-busy","false");}}
+async function refreshComparison(){if(!catalog)return;const req=beginRequest("comparison");syncStationControls("");$("alignment").textContent="";try{if(!selected.length){setStatus("status","Selecione um período para visualizar ou até três para comparar.");$("charts").innerHTML='<div class="empty"><strong>Sua comparação começa aqui</strong>Adicione um episódio, um ano, o período atual ou datas personalizadas.</div>';return;}const stationIds=stationsFor("");if(!stationIds.length)throw new Error("Nenhuma série disponível para a variável selecionada.");const resolution=$("resolution").value;const result=await api("./api/compare?"+new URLSearchParams({windows:JSON.stringify(selected),stations:stationIds.join(","),resolution,common:$("common").checked,phase:"all"}),req.signal);if(req.id!==requestIds.comparison)return;renderResults("comparison",result.series,{daily:resolution==="daily",relative:true});$("alignment").textContent=`${selected.length} período(s) · ${resolution==="daily"?"dias":"meses"} relativos ao início · ${$("common").checked?"mesma duração no trecho exibido":"durações originais"}. Datas originais nos pontos e na tabela.`;
+if(!result.reason&&Object.keys(result.cutoffs).length){
+  const last=Object.values(result.cutoffs).sort()[0];
+  $("alignment").textContent+=" Última data comum com dados no período atual: "+dateLabel(last)+".";
+}
+if(result.reason)$("charts").innerHTML=`<div class="empty">${esc(result.reason)}</div>`;setStatus("status","");}catch(error){if(error.name!=="AbortError"&&req.id===requestIds.comparison){setStatus("status",error.message,true);$("charts").innerHTML='<div class="empty">A comparação não foi concluída. Revise as datas e a opção de trecho comum.</div>';}}finally{if(req.id===requestIds.comparison)$(req.ids.results).setAttribute("aria-busy","false");}}
+function querySeries(stations,range,resolution,phase,label,signal){
+  return Promise.all(stations.map(async station=>{
+    const data=await api("./api/series?"+new URLSearchParams({station,...range,resolution,phase}),signal);
+    return {...data,label,window_id:"history"};
+  }));
+}
+async function refreshReport(){
+  if(!catalog)return;
+  const req=beginRequest("reports");
+  syncStationControls("r-");
+  $("r-print").disabled=true;
+  $("r-details").hidden=$("r-note").hidden=true;
+  $("r-context").textContent="";
+  try{
+    const range={start:$("r-start").value,end:$("r-end").value};
+    validRange(range.start,range.end);
+    const stations=stationsFor("r-");
+    if(!stations.length)throw new Error("Nenhuma série disponível para a variável selecionada.");
+    const phase=$("r-phase").value,resolution=$("r-resolution").value;
+    const label=dateLabel(range.start)+" a "+dateLabel(range.end);
+    const series=await querySeries(stations,range,resolution,phase,label,req.signal);
+    if(req.id!==requestIds.reports)return;
+    $("r-context").textContent=[label,phases[phase]||"Todas as fases ENSO",resolution==="daily"?"Resolução diária":"Resolução mensal"].join(" · ");
+    renderReport(series,resolution==="daily");
+    setStatus(req.ids.status,series.every(item=>!item.valid)?"Sem observações para os filtros selecionados. O relatório registra essa cobertura.":"");
+  }catch(error){
+    if(error.name!=="AbortError"&&req.id===requestIds.reports)setStatus(req.ids.status,error.message,true);
+  }finally{
+    if(req.id===requestIds.reports)$(req.ids.results).setAttribute("aria-busy","false");
+  }
+}
+function renderReport(series,daily){
+  displayed.reports=series;
+  $("r-summary").innerHTML=series.map(item=>{
+    const summary=summaryFor(item),rain=item.station.kind==="grid";
+    const value=(n,unit)=>n==null?"Sem dado":fmt(n)+" "+unit;
+    const stats=[
+      ["Dias observados / elegíveis",item.valid+" / "+item.expected],
+      ["Cobertura",value(item.coverage,"%")],
+      [rain?"Precipitação média diária":"Nível médio diário",value(summary.mean_daily,summary.mean_unit)],
+      ["Máximo diário",value(summary.maximum,item.unit)],
+    ];
+    if(rain)stats.push(["Acumulado observado",value(summary.total,"mm")]);
+    if(summary.maximum_date)stats.push(["Data do máximo",dateLabel(summary.maximum_date)]);
+    return `<article class="panel report-card">
+      <h3>${rain?"Precipitação":"Nível do rio"}</h3>
+      <p>${esc(item.station.name)}</p>
+      <dl>${stats.map(([key,val])=>`<div><dt>${key}</dt><dd>${esc(val)}</dd></div>`).join("")}</dl>
+      <p class="muted">${esc(item.station.source_name)} · ${fmt(item.missing)} dias elegíveis sem medição</p>
+      <p class="muted">Última coleta da série no recorte: ${esc(collected(item.collected_at))}</p>
+    </article>`;
+  }).join("");
+  series.forEach(item=>drawChart($("r-charts"),[item],{daily}));
+  renderValues($("r-values"),series);
+  $("r-download").disabled=$("r-print").disabled=false;
+  $("r-details").hidden=$("r-note").hidden=false;
+}
+function renderTimeline(){
+  const phase=$("timeline-phase").value;
+  const events=catalog.events.filter(event=>phase==="all"||event.phase===phase);
+  $("timeline").innerHTML=events.map(event=>`<tr>
+    <td>${dateLabel(event.start)}</td><td>${dateLabel(event.end)}</td>
+    <td>${phasePill(event.phase)}</td><td>${fmt(event.samples)}</td>
+    <td><button type="button" class="text-button" data-event="${esc(event.id)}"
+      aria-label="Explorar ${esc(event.label)}">Ver período</button></td></tr>`).join("")||
+    '<tr><td colspan="5" class="table-empty">Nenhuma janela nesta fase.</td></tr>';
+}
+function openHistory(range,phase="all"){
+  $("h-mode").value="custom";
+  $("h-start").value=range.start;
+  $("h-end").value=range.end;
+  $("h-phase").value=phase;
+  historyMode();
+  historyLoaded=true;
+  navigate("history");
+  refreshHistory();
+  $("app-main").focus();
+}
 function summaryFor(s){if(s.summary)return s.summary;const points=s.points.filter(p=>p.value!=null);const rain=s.station.kind==="grid";const total=points.reduce((n,p)=>n+p.value,0);return {mean_daily:s.valid?(rain?total/s.valid:points.reduce((n,p)=>n+p.value*p.valid,0)/s.valid):null,mean_unit:rain?"mm/dia":"m",total:rain&&s.valid?total:null,maximum:null,maximum_date:null};}
 function pointState(p){if(p.unclassified&&p.excluded)return "Sem classificação ENSO";if(p.excluded)return "Fora da fase selecionada";if(p.value==null)return "Sem medição";return p.partial?"Parcial":"Completo";}
 function renderResults(kind,series,options){
@@ -97,11 +182,14 @@ function renderResults(kind,series,options){
   }).join("");
   const stationIds=[...new Set(series.map(item=>item.station.id))];
   for(const station of stationIds)drawChart($(ids.charts),series.filter(item=>item.station.id===station),options);
-  $(ids.values).innerHTML=series.flatMap(item=>item.points.map(point=>`<tr><td>${esc(item.label)}</td><td>${esc(item.station.name)}</td><td>${dateLabel(point.date)}</td><td>${dateLabel(point.end)}</td><td>${fmt(point.value)}</td><td>${esc(item.unit)}</td><td>${esc(phases[point.phase]||"Não classificado")}</td><td>${point.valid}/${point.expected}</td><td class="${point.partial?"partial-label":""}">${pointState(point)}</td></tr>`)).join("")||'<tr><td colspan="9" class="table-empty">Nenhum valor neste recorte.</td></tr>';
+  renderValues($(ids.values),series);
   $(ids.insights).innerHTML=series.filter(item=>summaryFor(item).maximum!=null).map(item=>{
     const summary=summaryFor(item);
     return `<div class="insight"><strong>Máximo diário · ${esc(windowLabel(item))}</strong>${esc(item.station.name)}: <b>${fmt(summary.maximum)} ${esc(item.unit)}</b> em ${dateLabel(summary.maximum_date)}.<small>Entre ${fmt(item.valid)} dias observados; não é um limiar de risco.</small></div>`;
   }).join("");
+}
+function renderValues(target,series){
+  target.innerHTML=series.flatMap(item=>item.points.map(point=>`<tr><td>${esc(item.label)}</td><td>${esc(item.station.name)}</td><td>${dateLabel(point.date)}</td><td>${dateLabel(point.end)}</td><td>${fmt(point.value)}</td><td>${esc(item.unit)}</td><td>${esc(phases[point.phase]||"Não classificado")}</td><td>${point.valid}/${point.expected}</td><td class="${point.partial?"partial-label":""}">${pointState(point)}</td></tr>`)).join("")||'<tr><td colspan="9" class="table-empty">Nenhum valor neste recorte.</td></tr>';
 }
 function drawChart(target,series,{daily=false,relative=false,compact=false}={}){
   const first=series[0],rain=first.station.kind==="grid";
@@ -185,11 +273,11 @@ function drawChart(target,series,{daily=false,relative=false,compact=false}={}){
   });
   inspect(0);
 }
-function download(kind){const series=displayed[kind];if(!series.length)return;const cells=v=>{let s=String(v??"");if(typeof v==="string"&&/^[=+@\-\t\r]/.test(s))s="'"+s;return '"'+s.replaceAll('"','""')+'"';};const rows=[["periodo","estacao","fonte","latitude","longitude","inicio","fim","valor","unidade","fase_enso","dias_validos","dias_elegiveis","situacao","coletado_em"]];for(const s of series)for(const p of s.points)rows.push([s.label,s.station.name,s.station.source_name,s.station.latitude,s.station.longitude,p.date,p.end,p.value,s.unit,phases[p.phase]||"não classificado",p.valid,p.expected,pointState(p),s.collected_at]);const url=URL.createObjectURL(new Blob(["\ufeff"+rows.map(row=>row.map(cells).join(";")).join("\r\n")],{type:"text/csv;charset=utf-8"}));const a=document.createElement("a");a.href=url;a.download=kind==="history"?"chuva-x-rio-historico.csv":"chuva-x-rio-comparacao.csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function download(kind){const series=displayed[kind];if(!series.length)return;const cells=v=>{let s=String(v??"");if(typeof v==="string"&&/^[=+@\-\t\r]/.test(s))s="'"+s;return '"'+s.replaceAll('"','""')+'"';};const rows=[["periodo","estacao","fonte","latitude","longitude","inicio","fim","valor","unidade","fase_enso","dias_validos","dias_elegiveis","situacao","coletado_em"]];for(const s of series)for(const p of s.points)rows.push([s.label,s.station.name,s.station.source_name,s.station.latitude,s.station.longitude,p.date,p.end,p.value,s.unit,phases[p.phase]||"não classificado",p.valid,p.expected,pointState(p),s.collected_at]);const url=URL.createObjectURL(new Blob(["\ufeff"+rows.map(row=>row.map(cells).join(";")).join("\r\n")],{type:"text/csv;charset=utf-8"}));const a=document.createElement("a");a.href=url;a.download="chuva-x-rio-"+({history:"historico",comparison:"comparacao",reports:"relatorio"}[kind])+".csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function renderCatalog(){
   const rain=catalog.stations.filter(station=>station.kind==="grid"),rivers=catalog.stations.filter(station=>station.kind==="river");
-  ["rain","h-rain"].forEach(id=>fillSelect(id,rain));
-  ["river","h-river"].forEach(id=>fillSelect(id,rivers));
+  ["rain","h-rain","r-rain"].forEach(id=>fillSelect(id,rain));
+  ["river","h-river","r-river"].forEach(id=>fillSelect(id,rivers));
   const starts=catalog.stations.map(station=>station.first_valid).filter(Boolean).sort();
   const ends=catalog.stations.map(station=>station.last_valid).filter(Boolean).sort();
   const indices=catalog.indices||[],episodes=catalog.events.filter(event=>["warm","cold"].includes(phaseOf(event)));
@@ -197,7 +285,7 @@ function renderCatalog(){
   $("overview-kpis").innerHTML=[
     {label:"Precipitação",value:fmt(rain.reduce((total,station)=>total+station.samples,0)),detail:`Registros diários · ${rain.length} pontos em grade`,icon:"↧"},
     {label:"Nível do rio",value:fmt(rivers.reduce((total,station)=>total+station.samples,0)),detail:`Registros diários · ${rivers.length} ${rivers.length===1?"estação":"estações"} ANA`,icon:"≈"},
-    {label:"Período do acervo",value:starts.length?starts[0].slice(0,4)+"–"+ends.at(-1).slice(0,4):"Sem dados",detail:"Disponibilidade descontínua",icon:"◷"},
+    {label:"Período do acervo",value:starts.length?starts[0].slice(0,4)+"–"+ends.at(-1).slice(0,4):"Sem dados",detail:"Cobertura varia por série",icon:"◷"},
     {label:"Episódios ENSO",value:fmt(episodes.length),detail:`${counts("warm")} El Niño · ${counts("cold")} La Niña`,icon:"◌"}
   ].map(item=>`<article class="kpi"><span class="kpi-icon" aria-hidden="true">${item.icon}</span><span class="kpi-label">${item.label}</span><strong class="kpi-value">${item.value}</strong><p>${item.detail}</p></article>`).join("");
   $("phase-counts").innerHTML=["warm","cold","neutral"].map(phase=>`<div>${phasePill(phase)}<span>${fmt(indices.filter(index=>index.phase===phase).length)} meses</span></div>`).join("");
@@ -213,14 +301,28 @@ function renderCatalog(){
     for(let year=currentYear;year>=firstYear;year--)$(id).add(new Option(String(year),String(year)));
   }
   $("compare-year").value="2015";
-  for(const id of ["h-start","h-end","current-start","current-end"])$(id).max=today;
+  for(const id of ["h-start","h-end","current-start","current-end","r-start","r-end"])$(id).max=today;
   $("current-start").value="2015-01-01";
   $("current-end").value="2015-12-31";
   eventOptions();preset();resetHistory();syncStationControls("");
+  $("r-start").value=$("h-start").value;
+  $("r-end").value=$("h-end").value;
+  $("r-variables").value=$("h-variables").value;
+  renderTimeline();
 }
 async function renderOverview(){const station=catalog.stations.find(s=>s.kind==="grid"&&s.last_valid);const box=$("overview-chart");box.innerHTML="";if(!station){box.innerHTML='<div class="empty">Nenhuma série de precipitação carregada.</div>';box.setAttribute("aria-busy","false");$("open-recent").disabled=true;return;}recentWindow={station:station.id,start:station.last_valid.slice(0,4)+"-01-01",end:station.last_valid};$("overview-period").textContent=monthLabel(recentWindow.start)+" — "+monthLabel(recentWindow.end);$("overview-note").textContent=station.name+" · soma mensal dos dias disponíveis. Última observação: "+dateLabel(station.last_valid)+".";try{const s=await api("./api/series?"+new URLSearchParams({...recentWindow,resolution:"monthly",phase:"all"}));drawChart(box,[{...s,label:"Observações de "+recentWindow.end.slice(0,4),window_id:"overview"}],{compact:true});}catch(error){box.innerHTML=`<div class="empty">${esc(error.message)}</div>`;}finally{box.setAttribute("aria-busy","false");}}
 async function init(){setStatus("app-status","Carregando o acervo local…",false,true);$("retry").hidden=true;try{catalog=await api("./api/catalog");renderCatalog();setStatus("app-status","");navigate(location.hash.slice(1)||activeTab);await renderOverview();}catch(error){setStatus("app-status","Não foi possível carregar o acervo: "+error.message,true);$("retry").hidden=false;$("overview-chart").setAttribute("aria-busy","false");$("overview-chart").innerHTML='<div class="empty">O acervo local está indisponível. Tente carregar novamente.</div>';}}
 bindNavigation();$("retry").onclick=init;$("h-reset").onclick=()=>{if(catalog){resetHistory();refreshHistory();}};$("h-mode").onchange=()=>{historyMode();refreshHistory();};["h-year","h-start","h-end","h-phase","h-rain","h-river","h-resolution","h-variables"].forEach(id=>$(id).addEventListener("change",()=>{if(id==="h-year"){const range=rangeForYear($("h-year").value);$("h-start").value=range.start;$("h-end").value=range.end;}refreshHistory();}));["rain","river","resolution","variables","common"].forEach(id=>$(id).addEventListener("change",refreshComparison));$("period-kind").onchange=periodMode;$("event-phase").onchange=()=>{if(catalog)eventOptions();};$("period-form").onsubmit=addPeriod;$("preset-enso").onclick=()=>{if(catalog){preset();refreshComparison();}};$("h-download").onclick=()=>download("history");$("download").onclick=()=>download("comparison");$("open-recent").onclick=()=>{if(!recentWindow)return;$("h-mode").value="custom";$("h-year").value=recentWindow.end.slice(0,4);$("h-start").value=recentWindow.start;$("h-end").value=recentWindow.end;$("h-phase").value="all";$("h-rain").value=recentWindow.station;$("h-variables").value="rain";$("h-resolution").value="monthly";historyMode();historyLoaded=true;navigate("history");refreshHistory();$("app-main").scrollIntoView({block:"start"});};
+["r-start","r-end","r-variables","r-phase","r-rain","r-river","r-resolution"].forEach(id=>$(id).addEventListener("change",refreshReport));
+$("r-download").onclick=()=>download("reports");
+$("r-print").onclick=()=>window.print();
+$("timeline-phase").onchange=()=>{if(catalog)renderTimeline();};
+$("timeline").onclick=event=>{
+  const button=event.target.closest("[data-event]");
+  if(!button)return;
+  const period=catalog.events.find(item=>item.id===button.dataset.event);
+  openHistory({...period,end:period.end>today?today:period.end},period.phase);
+};
 if(location.protocol!=="file:")init();else document.querySelectorAll("main button,main input,main select").forEach(el=>el.disabled=true);
 
 

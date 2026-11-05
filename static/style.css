@@ -242,3 +242,54 @@ footer { padding:23px 32px; margin-top:20px; }
   .phase-intro h2 { font-size:21px; }
   footer { padding:20px 16px; }
 }
+
+/* Consolidated report */
+@media (min-width: 761px) {
+  .navigation { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+.report-filters .filters { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.report-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.report-summary, #r-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 475px), 1fr));
+  gap: 16px;
+}
+.report-card { margin: 0; }
+.report-card > p { margin: 0; }
+.report-card dl { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 15px 0; }
+.report-card dt { color: var(--muted); font-size: 12px; }
+.report-card dd { margin: 3px 0 0; font-size: 15px; font-weight: 600; }
+#r-charts .chart { margin: 16px 0 0; }
+#timeline-phase { margin-left: 8px; }
+@media (max-width: 760px) {
+  .report-filters .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 420px) {
+  .report-filters .filters { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media print {
+  @page { size: A4; margin: 13mm; }
+  body:has(#panel-reports:not([hidden])) { background: white; print-color-adjust: exact; }
+  body:has(#panel-reports:not([hidden])) :is(.site-header, .navigation-wrap, footer, .skip-link),
+  #panel-reports :is(.report-filters, .report-actions, .chart-controls, .chart-readout,
+                    .chart-provenance, .mobile-hint, .data-details, .cursor-line) {
+    display: none;
+  }
+  body:has(#panel-reports:not([hidden])) main { width: auto; padding: 0; }
+  #panel-reports .page-title { margin: 0 0 12px; }
+  #panel-reports .page-title h1 { font-size: 22px; }
+  #panel-reports .page-title p { display: none; }
+  #panel-reports .page-title::before {
+    content: "CHUVA × RIO · PROJETO INTEGRADOR II";
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+  }
+  #panel-reports .results-heading { display: none; }
+  #panel-reports .report-summary, #r-charts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  #panel-reports :is(.report-card, .chart) { padding: 12px; break-inside: avoid; }
+  #panel-reports .plot-scroll { overflow: visible; }
+  #panel-reports .chart svg { min-width: 0; }
+  #panel-reports .chart svg text { font-size: 16px; }
+}

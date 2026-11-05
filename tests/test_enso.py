@@ -1,4 +1,6 @@
 """ENSO regression fixtures are controlled inputs, never observed data."""
+import gzip
+import hashlib
 import json
 import os
 import tempfile
@@ -111,9 +113,36 @@ class EnsoTests(unittest.TestCase):
         self.assertEqual(result['series'][0]['end'],'2024-02-02')
 
     def test_snapshot_covers_all_phases_and_has_no_orphaned_runs(self):
-        snapshot = json.loads((ROOT/'data'/'demo.json').read_text(encoding='utf-8'))
+        with gzip.open(ROOT/'data'/'demo.json.gz','rt',encoding='utf-8') as data:
+            snapshot = json.load(data)
         self.assertEqual({row['phase'] for row in snapshot['event']},{'warm','cold','neutral'})
-        self.assertEqual(len(snapshot['measurement']),5852)
+        self.assertEqual(len(snapshot['measurement']),47504)
+        runs_by_id = {row['id']:row for row in snapshot['ingestion']}
+        archived = {}
+        for station, original_id, revision_id in [('power-ibirama',16,53),('power-presidente',19,54)]:
+            original = json.loads((ROOT/runs_by_id[original_id]['artifact']).read_bytes())
+            revision = json.loads((ROOT/runs_by_id[revision_id]['artifact']).read_bytes())
+            archived[station] = original_id, original['properties']['parameter']['PRECTOTCORR']
+            revised = [row for row in snapshot['measurement'] if row['run_id']==revision_id]
+            self.assertEqual(len(revised),286)
+            for row in revised:
+                key = row['date'].replace('-','')
+                self.assertEqual(row['value'],revision['properties']['parameter']['PRECTOTCORR'][key])
+        preserved = []
+        for row in snapshot['measurement']:
+            if row['run_id']<=22:
+                preserved.append(row)
+            elif row['run_id'] in (53,54):
+                run_id,values = archived[row['station_id']]
+                value = values[row['date'].replace('-','')]
+                preserved.append(dict(row,run_id=run_id,value=value,original=str(value)))
+        preserved.sort(key=lambda row: (row['station_id'],row['date']))
+        self.assertEqual(len(preserved),5852)
+        digest = hashlib.sha256(json.dumps(preserved,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+        self.assertEqual(digest,'2fba618b2885deb71efda2630e91bf1c46e9eef5f4e7acfa3297a32a27d5bff8')
+        for row in snapshot['ingestion']:
+            if row['artifact']:
+                self.assertEqual(hashlib.sha256((ROOT/row['artifact']).read_bytes()).hexdigest(),row['sha256'])
         runs = {row['id'] for row in snapshot['ingestion']}
         self.assertTrue(all(row['run_id'] in runs for row in snapshot['measurement']+snapshot['enso_index']+snapshot['event']))
 
@@ -134,7 +163,13 @@ class EnsoApiTests(unittest.TestCase):
                     self.assertEqual(response.status_code,200,response.text)
                     self.assertEqual(len(response.json()['series']),2)
                     self.assertEqual(response.json()['series'][0]['window_phase'],'cold')
-                    for bad in ['{}','[null]','not-json',json.dumps(windows*2)]:
+                    current = dict(windows[0],current=True)
+                    response = client.get('/api/compare',params={**params,'windows':json.dumps([current,windows[1]])})
+                    self.assertEqual(response.status_code,200,response.text)
+                    self.assertIn('Sem cobertura atual',response.json()['reason'])
+                    for bad in ['{}','[null]','not-json',json.dumps(windows*2),
+                                json.dumps([dict(current,current='true')]),
+                                json.dumps([current,dict(windows[1],current=True)])]:
                         self.assertEqual(client.get('/api/compare',params={**params,'windows':bad}).status_code,422)
                     self.assertEqual(client.get('/api/compare',params={**params,'events':'custom'}).status_code,422)
                     self.assertEqual(client.get('/api/series',params=dict(station='power-ibirama',start='2024-01-01',end='2024-12-31',phase='normal')).status_code,422)

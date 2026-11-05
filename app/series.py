@@ -9,7 +9,7 @@ def series(db, station_id, start, end, resolution='monthly', phase='all'):
                             FROM station JOIN source ON source.id=station.source_id WHERE station.id=?''',(station_id,)).fetchone()
     if not station:
         raise ValueError('Estação/ponto não encontrado')
-    rows = db.execute('''SELECT m.*,i.finished collected_at FROM measurement m JOIN ingestion i ON i.id=m.run_id
+    rows = db.execute('''SELECT m.date,m.value,i.finished collected_at FROM measurement m JOIN ingestion i ON i.id=m.run_id
                         WHERE station_id=? AND date BETWEEN ? AND ? ORDER BY date''',
                       (station_id,start.isoformat(),end.isoformat())).fetchall()
     indices = {r['date'][:7]: dict(r) for r in db.execute(
@@ -25,24 +25,27 @@ def series(db, station_id, start, end, resolution='monthly', phase='all'):
     while cursor <= end:
         stop = cursor if resolution == 'daily' else min(end, cursor.replace(day=calendar.monthrange(cursor.year,cursor.month)[1]))
         days = (stop-cursor).days+1
-        index = indices.get(cursor.isoformat()[:7])
+        stamp = cursor.isoformat()
+        index = indices.get(stamp[:7])
         point_phase = index['phase'] if index else None
         eligible = phase == 'all' or point_phase == phase
         expected += days if eligible else 0
         excluded += days if not eligible and point_phase is not None else 0
         unclassified += days if point_phase is None else 0
-        samples = [values[(cursor+timedelta(days=i)).isoformat()] for i in range(days)
-                   if (cursor+timedelta(days=i)).isoformat() in values]
+        keys = (stamp,) if days == 1 else ((cursor+timedelta(days=i)).isoformat() for i in range(days))
+        samples = [values[key] for key in keys if key in values]
         value = None
         if samples:
             value = sum(samples) if station['kind']=='grid' else sum(samples)/len(samples)
         calendar_days = calendar.monthrange(cursor.year,cursor.month)[1]
         window_partial = resolution=='monthly' and (cursor.day!=1 or stop.day!=calendar_days)
-        points.append(dict(date=cursor.isoformat(),end=stop.isoformat(),value=round(value,4) if value is not None else None,
+        points.append(dict(date=stamp,end=stamp if days == 1 else stop.isoformat(),value=round(value,4) if value is not None else None,
                            valid=len(samples),expected=days if eligible else 0,calendar_expected=calendar_days if resolution=='monthly' else 1,
                            window_partial=window_partial,partial=eligible and (window_partial or 0<len(samples)<days),
                            phase=point_phase,enso_value=index['value'] if index else None,
                            excluded=not eligible,unclassified=point_phase is None))
+        if stop == end:
+            break
         cursor = stop+timedelta(days=1)
     maximum = max(selected, key=lambda r: r['value']) if selected else None
     daily_mean = sum(r['value'] for r in selected)/len(selected) if selected else None

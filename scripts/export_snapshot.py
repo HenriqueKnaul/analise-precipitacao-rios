@@ -1,4 +1,5 @@
 """Export a real, previously ingested database for offline demonstration."""
+import gzip
 import json
 import sys
 from contextlib import closing
@@ -12,5 +13,6 @@ with closing(connect()) as db:
     db.commit()
     snapshot={table:[dict(r) for r in db.execute(f'SELECT * FROM {table}')]
               for table in ('source','station','ingestion','enso_index','event','measurement')}
-(ROOT/'data'/'demo.json').write_text(json.dumps(snapshot,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
+payload=json.dumps(snapshot,ensure_ascii=False,separators=(',',':')).encode('utf-8')
+(ROOT/'data'/'demo.json.gz').write_bytes(gzip.compress(payload,mtime=0))
 print('Snapshot:',len(snapshot['measurement']),'medições,',len(snapshot['event']),'episódios.')

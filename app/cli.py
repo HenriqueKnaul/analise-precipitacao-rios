@@ -1,4 +1,5 @@
 import argparse
+import gzip
 import json
 import sqlite3
 from contextlib import closing
@@ -28,7 +29,8 @@ def main():
         if args.command=='demo':
             if db.execute('SELECT COUNT(*) FROM ingestion').fetchone()[0]:
                 parser.error('Banco já contém cargas. Use um CHUVA_DB novo para carregar o snapshot.')
-            snapshot=json.loads((ROOT/'data'/'demo.json').read_text(encoding='utf-8'))
+            with gzip.open(ROOT/'data'/'demo.json.gz','rt',encoding='utf-8') as source:
+                snapshot=json.load(source)
             with db:
                 for table in ('source','station','ingestion','enso_index','event','measurement'):
                     for row in snapshot[table]:
@@ -56,10 +58,12 @@ def main():
             today=date.today()
             last=db.execute('SELECT MAX(finished) FROM ingestion WHERE source_id="noaa" AND status="sucesso"').fetchone()[0]
             if not last or last[:7]!=today.isoformat()[:7]: results.append(import_noaa(db))
+            end=today-timedelta(days=1)
             for s in db.execute('SELECT id FROM station WHERE kind="grid"').fetchall():
                 last=db.execute('SELECT MAX(date) FROM measurement WHERE station_id=?',(s['id'],)).fetchone()[0]
                 start=max(date(today.year,1,1),date.fromisoformat(last)-timedelta(days=30)) if last else date(today.year,1,1)
-                results.append(import_nasa(db,s['id'],start,today-timedelta(days=1)))
+                if start <= end:
+                    results.append(import_nasa(db,s['id'],start,end))
             backup=ROOT/'data'/'backups'/f'{today}.sqlite'
             backup.parent.mkdir(parents=True,exist_ok=True)
             with sqlite3.connect(backup) as target: db.backup(target)

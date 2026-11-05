@@ -1,24 +1,28 @@
-# Base da demonstração — 21/10/2026
+# Acervo de demonstração — 05/11/2026
 
-`demo.json` é uma exportação dos registros reais carregados, incluindo fonte, coordenadas, datas de coleta, referência HTTP, hash SHA-256 e caminho do artefato bruto. Os arquivos referenciados ficam em `raw/`. Não há medições sintéticas no snapshot. A base contém 5.852 medições: 4.538 de chuva e 1.314 de nível, além de 94 janelas ENSO: 25 de El Niño, 22 de La Niña e 47 neutras / sem episódio confirmado.
+O snapshot `demo.json.gz` contém **47.504 medições de fontes oficiais**. As **5.852 medições anteriores** foram verificadas uma a uma por estação e data. Todos os pares de estação e data foram preservados. Permaneceram idênticas 5.280 linhas. A revisão oficial atualizou 572 valores de 2026, com os originais preservados nos arquivos brutos.
 
-## Conteúdo e limites
+| Fonte e série | Cobertura no acervo | Registros |
+| --- | --- | ---: |
+| NASA POWER · Ibirama | 01/01/1981 a 18/10/2026, diária contínua | 16.727 |
+| NASA POWER · Presidente Getúlio | 01/01/1981 a 18/10/2026, diária contínua | 16.727 |
+| ANA/SNIRH · 83440000, Ibirama | 01/01/1981 a 31/12/2021, com lacunas | 14.050 |
+| NOAA/CPC · RONI ERSSTv6 | jan/1950 a ago/2026, mês central | 920 índices e 94 janelas |
 
-- NOAA/CPC: tabela RONI **ERSSTv6** consultada em 21/10/2026. O último mês central publicado no arquivo recebido é agosto de 2026. A aplicação importa as classes `roni-warm`, `roni-cold` e `roni-normal` da página, sem classificar os valores por limiar próprio. As três classes geram janelas contíguas; `roni-normal` é representada internamente por `neutral` (sem episódio confirmado). A referência RONI ERSSTv6 usa base 1991–2020 e limiar de ±0,5 °C por pelo menos cinco temporadas sobrepostas. Valores recentes podem ser revisados; meses sem índice permanecem sem classificação. A revisão de 22/10/2026 reutiliza integralmente os 920 índices oficiais já armazenados e todas as medições, sem nova coleta. Datas de eventos são o primeiro e último dia dos **meses centrais** das temporadas, convenção de navegação documentada; não são datas diárias de início físico do fenômeno.
-- NASA POWER: PRECTOTCORR, resolução diária, `time-standard=LST`, resposta em mm/day, normalizada para lâmina diária em mm. Pontos aproximados das sedes: Ibirama (-27.057, -49.519) e Presidente Getúlio (-27.051, -49.622). São consultas a produto em grade, não estações pluviométricas. A resposta bruta também conserva geometria e metadados da NASA. Pontos tão próximos podem retornar a mesma célula.
-- Intervalos carregados para os dois pontos: 01/01/1997–31/12/1998; 01/11/2014–31/12/2016; 01/01/2023–31/03/2024; 01/01/2026–20/10/2026. No último intervalo, 19 e 20/10 vieram como sentinelas de ausência; último valor válido em **18/10/2026**. Intervalos entre essas janelas não foram carregados.
-- ANA/SNIRH: estação **83440000 — Ibirama, Rio Itajaí do Norte/Hercílio**, em Ibirama/SC, coordenadas do inventário -27.0539, -49.5167. Responsável ANA, operadora EPAGRI-SC. O cadastro e as referências estão em [`ibirama-ana.json`](ibirama-ana.json), incluindo arquivo bruto e hash do inventário consultado em 21/10/2026.
-- Nível: **1.314 médias diárias reais**, recebidas em centímetros e normalizadas para metros. Apenas consistência 2, `MediaDiaria=1` e status diário 1 são aceitos. Referencial altimétrico não informado: os números são cotas locais, não elevação absoluta.
-- Cobertura de nível: 01/01/1997–31/12/1998 contém **522 dias válidos e 208 ausentes**; 01/11/2014–31/12/2016 contém **792 dias válidos**. A consulta 01/07/2023–29/02/2024 não retornou série; nenhum valor foi criado para preencher o intervalo. Não há série atual de nível incluída.
+## Critérios e limitações
 
-## Regra da importação ANA
+- **NASA POWER.** PRECTOTCORR diário, `time-standard=LST`. A taxa diária em mm/day é convertida em lâmina de precipitação daquele dia em mm. Coordenadas aproximadas das sedes de Ibirama (-27.057, -49.519) e Presidente Getúlio (-27.051, -49.622). Os dois pontos retornaram valores idênticos em todo o acervo, compatíveis com a resolução da grade. São estimativas de um produto em grade e não representam dois pluviômetros independentes. Os valores de 19 e 20/10/2026 eram sentinelas de ausência e foram rejeitados na carga original. [NASA POWER Daily API](https://power.larc.nasa.gov/docs/services/api/temporal/daily/).
+- **ANA/SNIRH.** Estação 83440000 em Ibirama, Rio Itajaí do Norte/Hercílio (-27.0539, -49.5167). Responsável ANA, operadora EPAGRI-SC. O XML foi consultado no serviço legado. Só entram médias diárias de escala com consistência 2, `MediaDiaria=1`, `TipoMedicaoCotas=1` e status diário 1. As cotas em cm são convertidas para m. O referencial altimétrico não foi informado. As consultas de 2022–2023 e 2024–2026 não forneceram cotas elegíveis nesse serviço. O acesso autenticado à API nova continua pendente. [HidroWeb](https://www.snirh.gov.br/hidroweb/) · [Serviço legado e migração](https://www.ana.gov.br/telemetria1ws/Dados.aspx) · [Cadastro e referências](ibirama-ana.json).
+- **NOAA/CPC.** A tabela consultada em 21/10/2026 tem 25 episódios quentes, 22 frios e 47 janelas neutras. A classificação vem das marcas oficiais da tabela e usa a base 1991–2020. Neutro significa sem episódio quente ou frio confirmado. Um mês sem índice fica sem classificação. As datas representam meses centrais das temporadas móveis e os valores recentes são sujeitos a revisão. [NOAA/CPC RONI](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/).
 
-O comando `python -m app.cli ana --metadata data/ibirama-ana.json --start 2014-11-01 --end 2016-12-31` consulta o serviço público `HidroSerieHistorica`. O XML recebido é preservado com SHA-256. O adaptador expande os campos diários do mês, aplica as regras de consistência e qualidade e conserva as ausências. O dicionário de dados referenciado no JSON documenta cotas em cm e os indicadores de medição; o nível de consistência segue a enumeração do serviço atual. A aplicação não interpola, não mistura cota com vazão e não cria dados de 2023/2024 ou 2026.
+A expansão consultou janelas complementares em 05/11/2026 e acrescentou **28.916 registros NASA** e **12.736 ANA**. A série de nível tem lacunas também entre 1981 e 2021. Exemplo: 1998 tem 188 dias válidos. As lacunas ficam em branco e um zero de chuva informado pela fonte permanece observação válida.
 
-## Rastreabilidade
+## Revisão oficial da precipitação de 2026
 
-As cargas repetidas/revisões estão registradas, inclusive uma falha inicial do parser NOAA antes de sua correção. Nenhuma falha apagou uma medição confirmada. A soma de inseridos + atualizados + duplicados + rejeitados corresponde aos registros processados. Motivos das rejeições ficam na mensagem de carga (até 2.000 caracteres); o arquivo completo permanece em `raw/`.
+A resposta original da NASA POWER v2.10.0 somava 28.296,48 mm por ponto entre 01/01 e 18/10/2026. A consulta de 05/11/2026 aos mesmos pontos e datas, com a v2.10.2, retornou 1.179,02 mm por ponto. Foram revisados 286 de 291 dias em cada ponto. O aplicativo usa os novos valores publicados pela fonte, sem ajuste por fator próprio. Os lotes originais 16 e 19 e os revisados 53 e 54 conservam as respostas completas e seus hashes. A verificação reproduziu a assinatura das 5.852 linhas anteriores a partir dos registros preservados e dos arquivos originais.
 
-Os dados de teste gerados por `unittest` nunca entram no banco da demonstração. Para recriar o snapshot depois de novas cargas reais: `python scripts/export_snapshot.py`. Reveja conteúdo e arquivos brutos antes de distribuir uma nova versão.
+## Auditoria e reprodução
 
-Fontes: [NOAA/CPC RONI](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/), [NASA POWER Daily API](https://power.larc.nasa.gov/docs/services/api/temporal/daily/), [ANA HidroWeb](https://www.snirh.gov.br/hidroweb/), [inventário ANA](https://www.ana.gov.br/telemetria1ws/ServiceANA.asmx?op=HidroInventario) e [série histórica ANA](https://www.ana.gov.br/telemetria1ws/ServiceANA.asmx?op=HidroSerieHistorica).
+Cada registro tem data civil, estação, fonte e referência à carga que o produziu. A carga conserva a data de coleta, parâmetros da consulta, status, contadores e SHA-256 do arquivo em `raw/`. A falha de cota em 2024–2026 aparece no histórico de cargas. Arquivos rejeitados ficam disponíveis para auditoria. A rotina de consulta usa somente SQLite.
+
+Para carregar a base em um banco novo, use `python -m app.cli demo`. Para recriar o snapshot a partir do banco selecionado em `CHUVA_DB`, use `python scripts/export_snapshot.py` após auditar as cargas e os artefatos. Consulte [validação](../docs/STATUS_MVP.md) e o [README](../README.md).
