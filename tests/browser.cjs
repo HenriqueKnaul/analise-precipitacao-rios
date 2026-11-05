@@ -1,6 +1,6 @@
 // Real browser acceptance checks. No remote data or synthetic measurements are used.
 // Run from the repository root; TEST_PYTHON and TEST_BROWSER may select local runtimes.
-const { chromium } = require("playwright");
+const { chromium, firefox } = require("playwright");
 const { spawn } = require("node:child_process");
 const fs = require("node:fs");
 const net = require("node:net");
@@ -10,7 +10,8 @@ const assert = require("node:assert/strict");
 const root = path.resolve(__dirname, "..");
 const temp = fs.mkdtempSync(path.join(root, "tests", "browser-"));
 const db = path.join(temp, "demo.sqlite");
-const screenshots = path.join(root, "output", "screenshots");
+const browserType = process.env.TEST_ENGINE === "firefox" ? firefox : chromium;
+const screenshots = path.join(root, "output", browserType === firefox ? "screenshots-firefox" : "screenshots");
 let server, browser, base, port, logs = "";
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function freePort() {
@@ -56,23 +57,25 @@ async function main() {
     base = `http://127.0.0.1:${port}`;
     await start();
     const catalog = await json("/api/catalog");
-    assert.equal(catalog.stations.reduce((n, s) => n + s.samples, 0), 5852);
-    assert.equal(catalog.stations.find((s) => s.kind === "river").samples, 1314);
+    assert.equal(catalog.stations.reduce((n, s) => n + s.samples, 0), 47504);
+    assert.equal(catalog.stations.find((s) => s.kind === "river").samples, 14050);
     assert.equal(catalog.events.filter((e) => e.phase === "warm").length, 25);
     for (const phase of ["warm", "cold", "neutral"]) {
       assert.ok(catalog.events.some((e) => e.phase === phase && e.samples > 0), phase + " has real local observations");
     }
     assert.ok(catalog.indices.every((i) => ["warm", "cold", "neutral"].includes(i.phase)));
-    log("fresh SQLite: 5,852 real observations and all three NOAA phases");
+    log("fresh SQLite: 47,504 real observations and all three NOAA phases");
     await checkPhaseContract(catalog);
-    browser = await chromium.launch({ headless: true, ...(process.env.TEST_BROWSER ? { executablePath: process.env.TEST_BROWSER } : {}) });
+    browser = await browserType.launch({ headless: true, ...(process.env.TEST_BROWSER ? { executablePath: process.env.TEST_BROWSER } : {}) });
+    log(browserType.name() + " " + browser.version());
     const context = await browser.newContext({ viewport: { width: 1366, height: 1000 }, locale: "pt-BR" });
     const page = await context.newPage();
+    await page.clock.setFixedTime(new Date("2026-11-05T12:00:00-03:00"));
     page.setDefaultTimeout(12000);
     const errors = [], failed = [], external = [];
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("requestfailed", (request) => {
-      if (!request.failure()?.errorText.includes("ERR_ABORTED")) failed.push(request.url());
+      if (!/(ERR_ABORTED|NS_BINDING_ABORTED)/.test(request.failure()?.errorText)) failed.push(request.url());
     });
     // All non-local traffic is blocked. The snapshot must be enough for the demo.
     await context.route(/^https?:\/\//, (route) => {
@@ -85,6 +88,18 @@ async function main() {
     await page.locator("#tab-history").waitFor();
     await page.waitForFunction(() => document.querySelector("#tab-history")?.disabled === false);
     await runInterfaceChecks(page, catalog);
+    if (browserType === chromium) {
+      const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+      const phone = await mobile.newPage();
+      await phone.goto(base);
+      await phone.locator("#tab-reports").tap();
+      await phone.locator("#r-charts svg").first().waitFor();
+      await phone.locator("#r-charts svg").first().tap();
+      assert.match(await phone.locator("#r-charts .chart-readout").first().innerText(), /mm/);
+      assert.equal(await phone.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      await mobile.close();
+      log("touch navigation and report chart on an emulated 390px phone");
+    }
     await stop();
     await start();
     assert.deepEqual(await json("/api/catalog"), catalog);
@@ -165,10 +180,10 @@ async function runInterfaceChecks(page, catalog) {
   };
   const date = async (id, value) => { await page.locator(id).fill(value); await page.locator(id).press("Tab"); };
   await page.locator("#overview-chart svg").waitFor();
-  assert.equal(await page.getByRole("tab").count(), 4);
+  assert.equal(await page.getByRole("tab").count(), 5);
   assert.equal(await page.getByRole("tabpanel").count(), 1);
-  assert.match(await page.locator("#overview-kpis").innerText(), /4[.\s]?538/);
-  assert.match(await page.locator("#overview-kpis").innerText(), /1[.\s]?314/);
+  assert.match(await page.locator("#overview-kpis").innerText(), /33[.\s]?454/);
+  assert.match(await page.locator("#overview-kpis").innerText(), /14[.\s]?050/);
   await page.locator("#tab-overview").focus();
   await page.keyboard.press("ArrowRight");
   if (await page.locator("#tab-history").getAttribute("aria-selected") !== "true") await page.keyboard.press("Enter");
@@ -176,7 +191,7 @@ async function runInterfaceChecks(page, catalog) {
   assert.equal(await page.locator("#tab-history").getAttribute("aria-selected"), "true");
   assert.equal(await page.locator("#panel-overview").isVisible(), false);
   assert.equal(await page.locator("#h-charts svg").count(), 2);
-  log("four accessible tabs, keyboard navigation and real overview/history charts");
+  log("five accessible tabs, keyboard navigation and real overview/history charts");
 
   const whole = await historyChange(() => page.locator("#h-year").selectOption("1998"));
   assert.equal(whole.valid, 365);
@@ -282,6 +297,17 @@ async function runInterfaceChecks(page, catalog) {
   assert.ok(comparison.series.some((s) => s.start === "1998-06-01"));
   await compareChange(() => page.locator("#preset-enso").click());
   log("remove-to-empty, year selection, custom periods and restore ENSO comparison");
+  await page.locator("#period-kind").selectOption("current");
+  await compareChange(() => page.locator("#variables").selectOption("rain"));
+  const current = await compareChange(() => page.locator("#add-period").click());
+  assert.equal(current.cutoffs["power-ibirama"], "2026-10-18");
+  assert.match(await page.locator("#alignment").innerText(), /18\/10\/2026/);
+  const missingCurrent = await compareChange(() => page.locator("#variables").selectOption("both"));
+  assert.equal(missingCurrent.series.length, 0);
+  assert.match(await page.locator("#charts").innerText(), /Sem cobertura atual/);
+  await compareChange(() => page.locator('[data-remove="current"]').click());
+  await compareChange(() => page.locator("#variables").selectOption("rain"));
+  log("current period clips to the last observation and explains absent current river data");
   for (const target of ["history", "comparison", "methodology"]) {
     await page.locator("#tab-overview").click();
     await page.locator(`[data-go="${target}"]`).click();
@@ -295,7 +321,73 @@ async function runInterfaceChecks(page, catalog) {
   await historyChange(() => page.locator("#h-reset").click());
   log("overview shortcuts open the intended tab and latest historical year");
   await checkResilience(page, historyChange, settle);
+  await page.locator("#tab-methodology").click();
+  await page.locator("#timeline-phase").selectOption("cold");
+  assert.equal(await page.locator("#timeline tr").count(), 22);
+  const event = catalog.events.find((item) => item.phase === "cold" && item.start === "2016-08-01") ||
+                catalog.events.find((item) => item.phase === "cold" && item.samples > 0);
+  await historyChange(() => page.locator(`[data-event="${event.id}"]`).click());
+  assert.equal(await page.locator("#h-start").inputValue(), event.start);
+  assert.equal(await page.locator("#h-phase").inputValue(), "cold");
+  await historyChange(() => page.locator("#h-reset").click());
+  log("chronological ENSO timeline filters by phase and opens the corresponding historical interval");
+  await checkReport(page, settle);
+  await page.locator("#tab-methodology").click();
+  await page.locator("#timeline-phase").selectOption("all");
   await checkLayouts(page);
+}
+
+async function checkReport(page, settle) {
+  await page.locator("#tab-reports").click();
+  await page.locator("#r-charts svg").first().waitFor();
+  await settle("r-results");
+  assert.equal(await page.locator("#r-summary .report-card").count(), 2);
+  assert.match(await page.locator("#r-summary").innerText(), /Máximo diário/);
+  await checkChartInteraction(page, "#r-charts");
+  await page.locator("#r-variables").selectOption("rain");
+  await settle("r-results");
+  assert.equal(await page.locator("#r-river").isDisabled(), true);
+  await page.locator("#r-rain").selectOption("power-presidente");
+  await settle("r-results");
+  assert.match(await page.locator("#r-summary").innerText(), /Presidente Getúlio/);
+  await page.locator("#r-resolution").selectOption("daily");
+  await settle("r-results");
+  assert.equal(await page.locator("#r-values tr").count(), 365);
+  await page.locator("#r-rain").selectOption("power-ibirama");
+  await page.locator("#r-resolution").selectOption("monthly");
+  await page.locator("#r-variables").selectOption("both");
+  await settle("r-results");
+  await page.locator("#r-phase").selectOption("cold");
+  await settle("r-results");
+  assert.match(await page.locator("#r-status").innerText(), /Sem observações/);
+  assert.equal(await page.locator("#r-charts svg").count(), 0);
+  const empty = await downloadCsv(page, "#r-download", "sem-dados.csv");
+  assert.match(empty, /Fora da fase selecionada/);
+  await page.locator("#r-phase").selectOption("all");
+  await settle("r-results");
+  await page.locator("#r-end").fill("2014-12-31");
+  await page.locator("#r-end").press("Tab");
+  await settle("r-results");
+  assert.equal(await page.locator("#r-print").isDisabled(), true);
+  await page.locator("#r-end").fill("2015-12-31");
+  await page.locator("#r-end").press("Tab");
+  await settle("r-results");
+  const csv = await downloadCsv(page, "#r-download", "relatorio.csv");
+  assert.match(csv, /NASA POWER/);
+  assert.match(csv, /ANA/);
+  assert.equal(csv.trimEnd().split(/\r?\n/).length - 1, await page.locator("#r-values tr").count());
+  await page.evaluate(() => { window.print = () => { window.printInvoked = true; }; });
+  await page.locator("#r-print").click();
+  assert.equal(await page.evaluate(() => window.printInvoked), true);
+  await page.emulateMedia({ media: "print" });
+  assert.equal(await page.locator(".report-filters").isVisible(), false);
+  assert.equal(await page.locator("#r-summary").isVisible(), true);
+  if (browserType === chromium) {
+    const pdf = await page.pdf({ path: path.join(screenshots, "relatorio.pdf"), preferCSSPageSize: true });
+    assert.equal(pdf.subarray(0, 5).toString(), "%PDF-");
+  }
+  await page.emulateMedia({ media: null });
+  log("report filters, observed statistics, no-data and invalid states, charts, CSV and PDF print layout");
 }
 
 async function downloadCsv(page, selector, filename) {
@@ -341,7 +433,7 @@ async function checkResilience(page, historyChange, settle) {
   await historyChange(() => page.locator("#h-year").selectOption("2016"));
   const latest = await page.locator("#h-charts").innerHTML();
   release();
-  assert.match((await cancelledRequest).failure().errorText, /ERR_ABORTED/);
+  assert.match((await cancelledRequest).failure().errorText, /(ERR_ABORTED|NS_BINDING_ABORTED)/);
   await pause(150);
   assert.equal(await page.locator("#h-year").inputValue(), "2016");
   assert.equal(await page.locator("#h-charts").innerHTML(), latest, "stale result must not overwrite latest filter selection");
@@ -360,7 +452,7 @@ async function checkResilience(page, historyChange, settle) {
 
 async function checkLayouts(page) {
   await page.locator("details").evaluateAll((items) => items.forEach((item) => item.open = false));
-  const names = { overview: "dashboard", history: "historico", comparison: "comparacao", methodology: "metodologia" };
+  const names = { overview: "dashboard", history: "historico", comparison: "comparacao", reports: "relatorio", methodology: "metodologia" };
   for (const width of [1366, 768, 360]) {
     await page.setViewportSize({ width, height: 1000 });
     for (const [tab, filename] of Object.entries(names)) {
@@ -379,6 +471,6 @@ async function checkLayouts(page) {
   assert.match(await page.locator("#sources").innerText(), /NOAA/);
   assert.match(await page.locator("#sources").innerText(), /NASA/);
   assert.match(await page.locator("#sources").innerText(), /ANA/);
-  log("all four tabs at 1366/768/360 px, including expanded tables, have no horizontal page overflow; screenshots saved");
+  log("all five tabs at 1366/768/360 px, including expanded tables, have no horizontal page overflow; screenshots saved");
 }
 main().catch((error) => { console.error(error); process.exitCode = 1; });

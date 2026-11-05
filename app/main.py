@@ -3,7 +3,7 @@ import json
 from contextlib import closing
 from typing import Literal
 from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from .db import ROOT, connect, initialize, PHASE_LABELS
 from .series import series, compare
@@ -66,7 +66,7 @@ def get_series(station: str, start: date, end: date, resolution: Literal['daily'
     validate_range(start,end)
     with closing(connect()) as db:
         try:
-            return series(db,station,start,end,resolution,phase)
+            return JSONResponse(series(db,station,start,end,resolution,phase))
         except ValueError as e:
             raise HTTPException(422,str(e))
 
@@ -117,8 +117,13 @@ def get_comparison(stations: str, events: str | None=None, resolution: Literal['
                     window_phase = item.get('phase')
                     if window_phase not in (None,'all','warm','cold','neutral'):
                         raise ValueError('Fase da janela inválida.')
-                    selected_windows.append(dict(id=window_id,label=label,start=start,end=end,phase=window_phase))
+                    current = item.get('current',False)
+                    if not isinstance(current,bool):
+                        raise ValueError('Indicador de período atual inválido.')
+                    selected_windows.append(dict(id=window_id,label=label,start=start,end=end,phase=window_phase,current=current))
                     seen.add(window_id)
+                if sum(window['current'] for window in selected_windows)>1:
+                    raise ValueError('Selecione apenas um período atual.')
             except (ValueError,TypeError,KeyError) as exc:
                 raise HTTPException(422,f'Janelas inválidas: {exc}')
         for event_id in event_ids:
@@ -133,6 +138,6 @@ def get_comparison(stations: str, events: str | None=None, resolution: Literal['
                     raise HTTPException(422,'Evento desconhecido')
                 selected_windows.append(dict(id=event_id,start=date.fromisoformat(event['start']),end=date.fromisoformat(event['end']),label=event['label'],phase=event['phase']))
         try:
-            return compare(db,station_ids,selected_windows,resolution,common,phase)
+            return JSONResponse(compare(db,station_ids,selected_windows,resolution,common,phase))
         except ValueError as e:
             raise HTTPException(422,str(e))
