@@ -1,39 +1,31 @@
-# Entrega e validação do MVP
+# Validação da entrega local — 05/11/2026
 
-Revisão de 22/10/2026 sobre a aplicação existente em Python/FastAPI, SQLite e JavaScript sem framework. A base original, os adaptadores NOAA/NASA/ANA e o iniciador local foram preservados. O escopo é uma demonstração acadêmica de análise histórica do Alto Vale do Itajaí.
+Ambiente de teste: Linux x86_64, Python 3.12.14, FastAPI 0.115.12 e SQLite. A referência é a [especificação de 28/09](Chuva_x_Rio_Especificacao_Revisada_28-09-2026.pdf), com o recorte desta entrega para apresentação local.
 
-## Implementação
+## Requisitos e evidências
 
-- Quatro áreas: Visão geral, Explorar histórico, Comparar períodos e Fontes e método; todas visíveis também na navegação móvel.
-- Filtros agrupados por período e dados, com local/resolução sob demanda; comparação guiada por etapas e um cartão de resultados por período. Amostra, máximos e procedência permanecem acessíveis em detalhes expansíveis.
-- Histórico por ano ou intervalo de até cinco anos, fase ENSO, ponto de precipitação, variável e resolução diária/mensal.
-- Comparação de até três episódios, anos ou intervalos, com duração comum opcional, cobertura e médias diárias descritivas.
-- Classificação de El Niño, La Niña e neutralidade a partir das marcações oficiais da tabela RONI ERSSTv6 NOAA/CPC, preservando os meses sem classificação.
-- Séries reais, lacunas explícitas, tabela acessível e CSV com procedência, unidades e classificação.
-- Gráficos separados para chuva (mm) e nível (m), leitura por cursor/teclado, estados de consulta e erro, navegação responsiva. Cores e legendas distinguem El Niño, La Niña, neutralidade e meses sem classificação; a comparação também diferencia períodos da mesma fase.
+| Requisitos | Entrega e verificação |
+| --- | --- |
+| RF01–RF05, RF16–RF18 | NASA POWER, NOAA/CPC e ANA integrados por cargas auditáveis. SQLite contém 47.504 medições, com local, fonte, data, unidade e procedência. Cobertura e lacunas aparecem na API, nos gráficos, nas tabelas e nos relatórios. |
+| RF06–RF09 | Linha do tempo RONI em ordem cronológica, filtrável por fase, com atalho para o recorte histórico. Chuva e nível em gráficos separados com resolução diária ou mensal. |
+| RF10–RF14 | Até três períodos em anos, episódios, datas livres ou período atual. Séries sobrepostas por variável, opções de duração comum ou original. O período atual usa a última data comum com dados. A interface informa quando uma variável carece de cobertura atual. |
+| RF15 | Rotina existente `python -m app.cli refresh` disponível para execução explícita. Agendamento recorrente e homologação de atualizações em hospedagem ficam pendentes. |
+| Entrega do professor | Dashboard, indicadores, relatórios consolidados, CSV da série e PDF com estatísticas e gráficos. Testes funcionais e de aceitação, roteiro, capturas atualizadas e pacote local. |
+| RNF01–RNF04 | Fluxos em Firefox e Chromium, três larguras de tela, interação por teclado e toque emulado e execução com tráfego externo bloqueado. |
+| RNF05–RNF07, RNF09–RNF10 | SQLite íntegro, sem chaves órfãs. Backup restaurado com igualdade integral nas seis tabelas. Testes de ordenação, datas, unidades, deduplicação, rollback, ausência e trilha de cargas. Política operacional de backup automático fica para a hospedagem. |
+| RNF08 | Ensaio local com a base entregue. O cenário formal da especificação com 1 milhão de registros e infraestrutura própria permanece pendente. |
 
-## Dados preservados
+## Testes executados
 
-São **5.852 medições reais**, das quais **4.538 de precipitação NASA POWER** em dois pontos e **1.314 médias diárias de nível ANA/SNIRH** da estação 83440000 em Ibirama. Nenhuma medição foi gerada para ampliar a cobertura.
+- **Python.** `python -m unittest discover -s tests -v`: 23/23 passaram. Inclui testes de integração com o TestClient, migração ENSO, períodos e fases inválidos, médias e somas, dias faltantes, revisões, rollback, consistência ANA, backup e integridade dos arquivos brutos.
+- **Aceitação no navegador.** `node tests/browser.cjs` em Chromium 151.0.7922.34 e Firefox 153.0. Cinco abas, teclado, filtros, linha do tempo, comparações, consultas, gráficos, CSV, falhas HTTP, descarte de resposta antiga e recuperação. Capturas em 1366, 768 e 360 px, com verificação de largura também nas tabelas abertas. Chromium verificou toque e gráfico a 390 px em modo celular. A execução usou navegadores desktop e emulação móvel.
+- **PDF.** O botão chama a impressão nativa. O PDF A4 gerado pelo Chromium foi aberto e conferido com gráficos, fontes, unidades, datas e cobertura. A exportação CSV inclui a série completa. O PDF é consolidado.
+- **Dados.** Os 41.652 novos registros foram conferidos contra os arquivos oficiais arquivados. As 5.852 observações anteriores foram recuperadas para conferência exata da assinatura, incluindo as originais que receberam revisão oficial. Foram verificados os SHA-256 de 52 arquivos de cargas, integridade do SQLite e vínculos de origem. A documentação de dados descreve a revisão de 2026 e a lacuna de cotas recentes. [Detalhes do acervo](../data/README.md).
+- **Desempenho local.** 100/100 respostas de comparação diária com 10 solicitações concorrentes, dois pontos/estações e três janelas de 24 meses. Em execução limitada a dois núcleos, p95 de 0,619 s e máximo de 0,897 s, medidos no cliente HTTP local com leitura do JSON. O teste usa 47.504 medições. A medição anterior sem afinidade de CPU obteve p95 de 2,555 s no mesmo ambiente compartilhado.
+- **Execução portátil.** Extração em pasta limpa, carga a partir do snapshot e reinício com banco existente testados em Linux com Python 3.13.5. Windows e macOS têm instruções próprias no README e ainda aguardam execução em equipamento físico.
 
-Os **920 índices mensais centrais** do snapshot NOAA vão de janeiro/1950 a agosto/2026. A mesma tabela agora origina **94 janelas contíguas**: 25 de El Niño, 22 de La Niña e 47 neutras/sem episódio confirmado. “Neutro” reproduz a ausência de marcação de episódio na fonte, inclusive valores que ainda não satisfazem a persistência; meses sem índice ficam não classificados.
+## Arquitetura e operação
 
-A última chuva válida é de 18/10/2026. Não há nível de rio para 2023–2024 ou 2026 na demonstração. A extensão temporal entre o primeiro e o último registro não representa cobertura contínua. Consulte [dados e procedência](../data/README.md).
+`run.py` inicializa o SQLite quando necessário e inicia o Uvicorn. `app/ingest.py` carrega e audita fontes e `app/series.py` aplica recorte, fase e resolução. A interface usa as rotas `/api/catalog`, `/api/series` e `/api/compare`. Relatórios reutilizam as séries consultadas e os gráficos SVG locais. CSV é gerado no navegador e PDF usa o mesmo recorte com estilos de impressão.
 
-## Verificação executada em 22/10/2026
-
-- **23 testes Python de dados e API aprovados**: seis de ENSO, onze de séries/importação, quatro regressões e dois testes de API. Abrangem fases oficiais, migração/idempotência, filtros, lacunas/zero, agregação, unidades, consistência ANA, rollback, deduplicação, intervalos e cobertura. Os dois testes com `TestClient` também concluíram após a liberação do ambiente.
-- **API HTTP real validada** com servidor local e banco temporário: restauração das 5.852 medições e 94 janelas; 1998 contém 365 dias de chuva, particionados em 120 quentes, 214 frios e 31 neutros. Filtros mantêm valores excluídos ausentes, rio em 2023 sem valores, La Niña em 2015 sem dias elegíveis, setembro/outubro de 2026 sem índice não entram como neutros; intervalo invertido retorna 422.
-- **Integridade e rastreabilidade verificadas**: igualdade exata das 5.852 medições e registros de ingestão com a base anterior, preservação dos valores/datas/IDs de carga dos 920 índices, 21 hashes de artefatos brutos corretos, `integrity_check` e `foreign_key_check` aprovados.
-- **Playwright aprovado em Edge/Chromium**: quatro abas, navegação por teclado, filtros por ano/data/fase/estação/resolução, gráficos interativos, comparação de até três períodos, exportações CSV, carregamento, respostas fora de ordem, falha HTTP e recuperação, recarregamento, reinício e abertura direta do HTML. Zero erros JavaScript ou falhas de recursos; consulta validada com tráfego externo bloqueado. As quatro abas e tabelas expandidas foram verificadas em 1366, 768 e 360 pixels, sem transbordamento horizontal. Capturas atualizadas em `docs/screenshots/`; revisão visual corrigiu o contraste do título da visão geral.
-
-`tests/browser.cjs` usa um banco descartável e uma porta local disponível. Inicia/encerra o servidor, impede tráfego externo e grava capturas em `output/screenshots/`. Não altera o banco usado na apresentação. As instruções reproduzíveis estão no [README](../README.md).
-
-## Limitações
-
-1. As janelas de precipitação e nível são descontínuas. Ampliar cobertura exige novas cargas das fontes; a interface não interpola nem substitui ausência por zero.
-2. NASA POWER é produto em grade, não pluviômetro físico. Pontos próximos podem compartilhar a mesma célula. O nível ANA é uma cota local, sem referencial altimétrico conhecido nesta base.
-3. As datas ENSO são meses centrais de temporadas móveis de três meses, não datas físicas diárias de início/fim. A análise é descritiva; diferenças não comprovam causalidade, anomalia climatológica ou significância estatística.
-4. O acervo local não é monitoramento em tempo real, previsão ou alerta. O comando de atualização continua disponível, mas não foi instalado agendamento do sistema operacional.
-5. Não foram executados ensaios de produção com um milhão de medições/dez usuários, homologação em Firefox, leitor de tela ou recuperação de falha abrupta. Não se afirma meta de latência de produção.
-6. SQLite atende a execução local. Migração para PostgreSQL, papéis de acesso e infraestrutura pública permanecem fora do escopo deste MVP.
+A consulta funciona com o snapshot distribuído e as fontes externas bloqueadas. A rede é necessária para instalar as dependências ou importar novas séries. O [README](../README.md) reúne as instruções de execução e o que ficará para a publicação.
